@@ -5,4 +5,3 @@ import misc from './misc'
 
 webgl()
 misc()
-

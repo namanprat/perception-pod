@@ -6,87 +6,139 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 function webgl()
 {
-
-   
-   // 1. SCENE SETUP (Unchanged)
-   // =================================================================
    const scene = new THREE.Scene();
-   scene.background = new THREE.Color(0xdddddd);
+   // NOTE: For a transparent background, we don't set a scene.background color.
    
-   // 2. CAMERA SETUP (Unchanged)
-   // =================================================================
-   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-   camera.position.set(0, 1, 5);
-   
-   // 3. RENDERER SETUP (*** MODIFIED ***)
-   // =================================================================
    // Get a reference to the canvas element from the HTML
    const canvas = document.querySelector('#webgl');
    
-   // Pass the canvas to the renderer in its constructor options
+   // Sizes
+   const sizes = {
+       width: window.innerWidth,
+       height: window.innerHeight
+   };
+   
+   // Camera
+   const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
+   camera.position.z = 3;
+   scene.add(camera);
+   
+   // Renderer
    const renderer = new THREE.WebGLRenderer({
-       canvas: canvas,
-       antialias: true
+       canvas: canvas,      // Use the existing canvas
+       antialias: true,
+       alpha: true          // <<< THIS IS THE KEY FOR A TRANSPARENT BACKGROUND
    });
-   renderer.setSize(window.innerWidth, window.innerHeight);
-   renderer.setPixelRatio(window.devicePixelRatio);
+   renderer.setSize(sizes.width, sizes.height);
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
    
-   // We DON'T need to append the renderer.domElement to the body anymore,
-   // because we are already using the canvas from the HTML.
-   
-   // 4. LIGHTING (Unchanged)
-   // =================================================================
-   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-   scene.add(ambientLight);
-   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-   directionalLight.position.set(5, 10, 7.5);
-   scene.add(directionalLight);
-   
-   // 5. CONTROLS (Unchanged)
-   // =================================================================
-   // Note: renderer.domElement is the same as our 'canvas' variable here.
+   // Controls (for mouse interaction)
    const controls = new OrbitControls(camera, renderer.domElement);
-   controls.enableDamping = true;
-   controls.dampingFactor = 0.05;
+   controls.enableDamping = true; // Makes the rotation smoother
    
-   // 6. MODEL LOADER (Unchanged)
    // =================================================================
-   const loader = new GLTFLoader();
-   loader.load('./dry_flower.glb', (gltf) => {
-       const model = gltf.scene;
-       const box = new THREE.Box3().setFromObject(model);
-       const center = box.getCenter(new THREE.Vector3());
-       const size = box.getSize(new THREE.Vector3());
-       model.position.sub(center);
-       const maxDim = Math.max(size.x, size.y, size.z);
-       const scale = 3.0 / maxDim;
-       model.scale.multiplyScalar(scale);
-       scene.add(model);
-       console.log('Model loaded successfully!');
-   }, (xhr) => {
-       console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-   }, (error) => {
-       console.error('An error happened while loading the model:', error);
+   // 2. OBJECTS & LIGHTS
+   // =================================================================
+   
+   // Cube
+   const geometry = new THREE.BoxGeometry(1, 1, 1);
+   const material = new THREE.MeshStandardMaterial({
+       color: 0x0099ff, // A nice blue color
+       metalness: 0.3,
+       roughness: 0.4
+   });
+   const cube = new THREE.Mesh(geometry, material);
+   scene.add(cube);
+   
+   // Lights
+   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+   scene.add(ambientLight);
+   
+   const pointLight = new THREE.PointLight(0xffffff, 0.8);
+   pointLight.position.set(2, 3, 4);
+   scene.add(pointLight);
+   
+   
+   // =================================================================
+   // 3. INTERACTIVITY (HOVER & CLICK)
+   // =================================================================
+   
+   const raycaster = new THREE.Raycaster();
+   const mouse = new THREE.Vector2();
+   let currentIntersect = null; // To keep track of the currently hovered object
+   
+   // --- Update mouse coordinates on move ---
+   window.addEventListener('mousemove', (event) => {
+       // Normalize mouse coordinates to a range of -1 to +1
+       mouse.x = (event.clientX / sizes.width) * 2 - 1;
+       mouse.y = -(event.clientY / sizes.height) * 2 + 1;
    });
    
-   // 7. ANIMATION LOOP (Unchanged)
+   // --- Handle clicks ---
+   window.addEventListener('click', () => {
+       // If the mouse is currently hovering over the cube...
+       if (currentIntersect) {
+           // ...change its material color to a random color
+           cube.material.color.set(Math.random() * 0xffffff);
+       }
+   });
+   
+   
    // =================================================================
-   function animate() {
-       requestAnimationFrame(animate);
+   // 4. ANIMATION LOOP
+   // =================================================================
+   
+   const animate = () => {
+       // Update controls
        controls.update();
+   
+       // --- Raycasting for Hover Effect ---
+       // Cast a ray from the camera to the mouse position
+       raycaster.setFromCamera(mouse, camera);
+       const intersects = raycaster.intersectObjects([cube]);
+   
+       if (intersects.length > 0) {
+           // If the mouse is intersecting the cube for the first time
+           if (!currentIntersect) {
+               cube.material.color.set(0xff6347); // Change to a tomato color
+           }
+           currentIntersect = intersects[0];
+       } else {
+           // If the mouse is no longer intersecting the cube
+           if (currentIntersect) {
+               // Change color back to the original blue
+               cube.material.color.set(0x0099ff);
+           }
+           currentIntersect = null;
+       }
+   
+       // Render the scene
        renderer.render(scene, camera);
-   }
+   
+       // Call animate again on the next frame
+       window.requestAnimationFrame(animate);
+   };
+   
+   // Start the animation loop
    animate();
    
-   // 8. RESIZE HANDLER (Unchanged)
+   
    // =================================================================
-   window.addEventListener('resize', onWindowResize, false);
-   function onWindowResize() {
-       camera.aspect = window.innerWidth / window.innerHeight;
+   // 5. RESIZE HANDLER
+   // =================================================================
+   window.addEventListener('resize', () => {
+       // Update sizes
+       sizes.width = window.innerWidth;
+       sizes.height = window.innerHeight;
+   
+       // Update camera aspect ratio
+       camera.aspect = sizes.width / sizes.height;
        camera.updateProjectionMatrix();
-       renderer.setSize(window.innerWidth, window.innerHeight);
-   }
-
+   
+       // Update renderer
+       renderer.setSize(sizes.width, sizes.height);
+       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+   });
 }
 
 export default webgl
