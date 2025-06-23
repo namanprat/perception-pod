@@ -6,138 +6,72 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 function webgl()
 {
+   
+   // 1. Scene, Camera, and Renderer
+   // =================================================================
    const scene = new THREE.Scene();
-   // NOTE: For a transparent background, we don't set a scene.background color.
    
-   // Get a reference to the canvas element from the HTML
-   const canvas = document.querySelector('#webgl');
+   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+   camera.position.z = 5; // Move camera back so we can see the object
    
-   // Sizes
-   const sizes = {
-       width: window.innerWidth,
-       height: window.innerHeight
-   };
-   
-   // Camera
-   const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100);
-   camera.position.z = 3;
-   scene.add(camera);
-   
-   // Renderer
    const renderer = new THREE.WebGLRenderer({
-       canvas: canvas,      // Use the existing canvas
-       antialias: true,
-       alpha: true          // <<< THIS IS THE KEY FOR A TRANSPARENT BACKGROUND
+       canvas: document.querySelector('#webgl'),
+       alpha: true // For a transparent background
    });
-   renderer.setSize(sizes.width, sizes.height);
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+   renderer.setSize(window.innerWidth, window.innerHeight);
+   renderer.setPixelRatio(window.devicePixelRatio);
    
-   // Controls (for mouse interaction)
-   const controls = new OrbitControls(camera, renderer.domElement);
-   controls.enableDamping = true; // Makes the rotation smoother
    
+   // 2. A single light source
    // =================================================================
-   // 2. OBJECTS & LIGHTS
-   // =================================================================
-   
-   // Cube
-   const geometry = new THREE.BoxGeometry(1, 1, 1);
-   const material = new THREE.MeshStandardMaterial({
-       color: 0x0099ff, // A nice blue color
-       metalness: 0.3,
-       roughness: 0.4
-   });
-   const cube = new THREE.Mesh(geometry, material);
-   scene.add(cube);
-   
-   // Lights
-   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+   // Without any light, the model will appear black.
+   const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
    scene.add(ambientLight);
    
-   const pointLight = new THREE.PointLight(0xffffff, 0.8);
-   pointLight.position.set(2, 3, 4);
-   scene.add(pointLight);
    
-   
+   // 3. GLB Model Loader
    // =================================================================
-   // 3. INTERACTIVITY (HOVER & CLICK)
-   // =================================================================
+   const loader = new GLTFLoader();
+   const modelPath = './dry_flower.glb'; // <<< CHANGE THIS TO YOUR MODEL'S FILENAME
    
-   const raycaster = new THREE.Raycaster();
-   const mouse = new THREE.Vector2();
-   let currentIntersect = null; // To keep track of the currently hovered object
+   loader.load(
+       // resource URL
+       modelPath,
+       // called when the resource is loaded
+       function (gltf) {
+           // The loaded model is in gltf.scene
+           scene.add(gltf.scene);
    
-   // --- Update mouse coordinates on move ---
-   window.addEventListener('mousemove', (event) => {
-       // Normalize mouse coordinates to a range of -1 to +1
-       mouse.x = (event.clientX / sizes.width) * 2 - 1;
-       mouse.y = -(event.clientY / sizes.height) * 2 + 1;
-   });
+           console.log("Model loaded successfully!");
    
-   // --- Handle clicks ---
-   window.addEventListener('click', () => {
-       // If the mouse is currently hovering over the cube...
-       if (currentIntersect) {
-           // ...change its material color to a random color
-           cube.material.color.set(Math.random() * 0xffffff);
-       }
-   });
+           // IMPORTANT: The model might be very large, very small, or off-center.
+           // You may need to manually adjust the camera.position or add scaling/centering
+           // code here if you don't see anything.
+           // For example:
+           // gltf.scene.scale.set(0.1, 0.1, 0.1);
+       },
+       // The other loader functions (onProgress, onError) are optional
+   );
    
    
-   // =================================================================
-   // 4. ANIMATION LOOP
-   // =================================================================
-   
-   const animate = () => {
-       // Update controls
-       controls.update();
-   
-       // --- Raycasting for Hover Effect ---
-       // Cast a ray from the camera to the mouse position
-       raycaster.setFromCamera(mouse, camera);
-       const intersects = raycaster.intersectObjects([cube]);
-   
-       if (intersects.length > 0) {
-           // If the mouse is intersecting the cube for the first time
-           if (!currentIntersect) {
-               cube.material.color.set(0xff6347); // Change to a tomato color
-           }
-           currentIntersect = intersects[0];
-       } else {
-           // If the mouse is no longer intersecting the cube
-           if (currentIntersect) {
-               // Change color back to the original blue
-               cube.material.color.set(0x0099ff);
-           }
-           currentIntersect = null;
-       }
-   
-       // Render the scene
+   // 4. Animation Loop
+   // =_================================================================
+   // This function will be called on every frame to re-render the scene.
+   function animate() {
+       requestAnimationFrame(animate);
        renderer.render(scene, camera);
-   
-       // Call animate again on the next frame
-       window.requestAnimationFrame(animate);
-   };
+   }
    
    // Start the animation loop
    animate();
    
    
-   // =================================================================
-   // 5. RESIZE HANDLER
+   // 5. Basic Resize Handler
    // =================================================================
    window.addEventListener('resize', () => {
-       // Update sizes
-       sizes.width = window.innerWidth;
-       sizes.height = window.innerHeight;
-   
-       // Update camera aspect ratio
-       camera.aspect = sizes.width / sizes.height;
+       camera.aspect = window.innerWidth / window.innerHeight;
        camera.updateProjectionMatrix();
-   
-       // Update renderer
-       renderer.setSize(sizes.width, sizes.height);
-       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+       renderer.setSize(window.innerWidth, window.innerHeight);
    });
 }
 

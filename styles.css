@@ -42,6 +42,7 @@
   
   }
   #webgl{
+    z-index: -1;
     background-color: transparent;
     position: relative;
     width: 100%;
