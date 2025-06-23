@@ -1,4 +1,4 @@
 import * as THREE from 'three';
-import './style.css';
+import './styles.css';
 
 console.log(THREE);
