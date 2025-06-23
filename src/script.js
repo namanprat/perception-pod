@@ -43,11 +43,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const heroTl = gsap.timeline();
     heroTl
       .to(".hero-wordmark .hero-path", {
-        delay: 3.25,
+        delay: 3.1,
         opacity: 1,
         yPercent: 0,
         duration: 0.8,
-        ease: "power3.in",
+        ease: "power3.out",
         stagger: {
           amount: 0.25
         }
