@@ -32,11 +32,11 @@ function webgl()
    // 3. GLB Model Loader
    // =================================================================
    const loader = new GLTFLoader();
-   const modelPath = './dry_flower.glb'; // <<< CHANGE THIS TO YOUR MODEL'S FILENAME
+   const modelUrl = 'https://perception-pod.netlify.app/dry_flower.glb'; // <<< CHANGE THIS TO YOUR MODEL'S FILENAME
    
    loader.load(
        // resource URL
-       modelPath,
+       modelUrl,
        // called when the resource is loaded
        function (gltf) {
            // The loaded model is in gltf.scene
