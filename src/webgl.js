@@ -1,77 +1,87 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
 
 function webgl()
 {
    
-   // 1. Scene, Camera, and Renderer
+   
+   // 1. Scene, Camera, and Renderer Setup
    // =================================================================
    const scene = new THREE.Scene();
    
-   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-   camera.position.z = 5; // Move camera back so we can see the object
+   // <<< CHANGE: Find the container div
+   const container = document.querySelector('#webgl');
    
+   // <<< CHANGE: The renderer is created without a canvas reference
    const renderer = new THREE.WebGLRenderer({
-       canvas: document.querySelector('#webgl'),
+       antialias: true,
        alpha: true // For a transparent background
    });
-   renderer.setSize(window.innerWidth, window.innerHeight);
+   
+   // <<< CHANGE: The renderer's canvas (renderer.domElement) is appended to the container
+   container.appendChild(renderer.domElement);
+   
+   // Use the container's dimensions for the camera and renderer
+   const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+   camera.position.set(0, 1, 5);
+   
+   renderer.setSize(container.clientWidth, container.clientHeight);
    renderer.setPixelRatio(window.devicePixelRatio);
    
    
-   // 2. A single light source
+   // 2. Light Sources
    // =================================================================
-   // Without any light, the model will appear black.
    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
    scene.add(ambientLight);
+   
+   const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+   directionalLight.position.set(5, 5, 5);
+   scene.add(directionalLight);
    
    
    // 3. GLB Model Loader
    // =================================================================
    const loader = new GLTFLoader();
-   const modelUrl = 'https://perception-pod.netlify.app/dry_flower.glb'; // <<< CHANGE THIS TO YOUR MODEL'S FILENAME
+   const modelUrl = 'https://perception-pod.netlify.app/dry_flower.glb';
    
    loader.load(
-       // resource URL
        modelUrl,
-       // called when the resource is loaded
        function (gltf) {
-           // The loaded model is in gltf.scene
-           scene.add(gltf.scene);
+           const model = gltf.scene;
    
-           console.log("Model loaded successfully!");
+           // <<< CHANGE: Enlarge the model by 300%
+           model.scale.set(3, 3, 3);
    
-           // IMPORTANT: The model might be very large, very small, or off-center.
-           // You may need to manually adjust the camera.position or add scaling/centering
-           // code here if you don't see anything.
-           // For example:
-           // gltf.scene.scale.set(0.1, 0.1, 0.1);
+           // Center the model after scaling
+           const box = new THREE.Box3().setFromObject(model);
+           const center = box.getCenter(new THREE.Vector3());
+           model.position.sub(center);
+   
+           scene.add(model);
+           console.log("Model loaded and scaled successfully!");
        },
-       // The other loader functions (onProgress, onError) are optional
+       (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+       (error) => { console.error('An error happened', error); }
    );
    
    
    // 4. Animation Loop
-   // =_================================================================
-   // This function will be called on every frame to re-render the scene.
+   // =================================================================
    function animate() {
        requestAnimationFrame(animate);
        renderer.render(scene, camera);
    }
-   
-   // Start the animation loop
    animate();
    
    
-   // 5. Basic Resize Handler
+   // 5. Resize Handler
    // =================================================================
    window.addEventListener('resize', () => {
-       camera.aspect = window.innerWidth / window.innerHeight;
+       // <<< CHANGE: Use container's dimensions for resizing
+       camera.aspect = container.clientWidth / container.clientHeight;
        camera.updateProjectionMatrix();
-       renderer.setSize(window.innerWidth, window.innerHeight);
+       renderer.setSize(container.clientWidth, container.clientHeight);
    });
 }
 
