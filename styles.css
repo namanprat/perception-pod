@@ -9,11 +9,9 @@
   
   .card-highlight {
     position: absolute;
-    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    border-radius: 1rem;
     mix-blend-mode: color-dodge;
     opacity: 0;
     pointer-events: none;
@@ -30,14 +28,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    border-radius: 1rem;
     background-image: linear-gradient(115deg,
         transparent 20%, #ff00ff, #ff0073, #ff5e00, #ffee00,
         #00ff00, #00ffff, #007bff, #5e00ff, #ff00ff,
         transparent 80%);
     background-size: 200% 200%;
     background-position: var(--gx) var(--gy);
-    mix-blend-mode: screen;
+    mix-blend-mode: color-dodge;
     opacity: 0.6;
   
   }
