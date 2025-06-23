@@ -51,7 +51,7 @@ function webgl()
            const model = gltf.scene;
    
            // <<< CHANGE: Enlarge the model by 300%
-           model.scale.set(3, 3, 3);
+           model.scale.set(10, 10, 10);
    
            // Center the model after scaling
            const box = new THREE.Box3().setFromObject(model);
