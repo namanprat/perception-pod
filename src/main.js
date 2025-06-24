@@ -1,11 +1,22 @@
 import './styles.css'
-import webgl from './webgl'
+import Lenis from 'lenis'
 import misc from './misc'
+import webgl from './webgl'
+import 'lenis/dist/lenis.css'
 import { Gradient } from './gradient'
 
+const lenis = new Lenis();
+
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add((time) => {
+  lenis.raf(time * 1000);
+});
+gsap.ticker.lagSmoothing(0);
 
 
 webgl()
 misc()
 const gradient = new Gradient()
 gradient.initGradient('#gradient-canvas')
+
+console.log("%cThis site was built by Naman Pratulya: https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
