@@ -27,6 +27,9 @@ function misc()
             opacity: 0,
             duration: 0.9,
             ease: "power3.out",
+            stagger: {
+              amount: 0.05
+            }
           })
       
           .to(
