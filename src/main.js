@@ -20,3 +20,4 @@ const gradient = new Gradient()
 gradient.initGradient('#gradient-canvas')
 
 console.log("%cThis site was built by Naman Pratulya: https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
+{/* <script type="module" src="https://perception-pod.netlify.app/main.js"></script> */}

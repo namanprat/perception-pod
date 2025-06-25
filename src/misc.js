@@ -22,42 +22,53 @@ function misc()
               amount: 0.25
             }
           }).to(".preloader-wordmark .path", {
-            delay: 1,
+            delay: 0,
             yPercent: -100,
             opacity: 0,
-            duration: 0.9,
-            ease: "power3.out",
+            duration: 0.8,
+            ease: "power3.in",
             stagger: {
-              amount: 0.05
+              amount: 0.12
             }
           })
       
           .to(
             ".preloader_wrap", {
               yPercent: -100,
-              delay: -0.25,
               duration: 0.8,
               ease: "power3.out"
             },
           );
       
-        // HERO REVEAL
+        // HERO REVEAL      
+        let headerSplit = new SplitText("#header-split", {
+          type: "words, lines", // Split into both lines and words
+          linesClass: "split-line-wrapper" // Add this class to the line containers
+        });
+        
         const heroTl = gsap.timeline();
         heroTl
           .to(".hero-wordmark .hero-path", {
-            delay: 3.7,
-            opacity: 1,
-            yPercent: 0,
-            duration: 1,
-            ease: "power2.inOut",
-            stagger: 0.02
+              delay: 2.35,
+              opacity: 1,
+              yPercent: 0,
+              duration: 1,
+              ease: "power2.inOut",
+              stagger: 0.02
           }, "<")
           .from(".hero-nav-item", {
-            delay: 0.3,
-            yPercent: -120,
-            duration: 1.2,
-            ease: "power4.inOut",
-            stagger: 0.1,
+              delay: 0.3,
+              yPercent: -120,
+              duration: 1.25,
+              ease: "power4.inOut",
+              stagger: 0.1,
+          }, "<")
+          // The animation target is still the words, which is correct!
+          .from(headerSplit.words, {
+              yPercent: 100,
+              duration: 1.25,
+              stagger: 0.02,
+              ease: "power4.inOut",
           }, "<");
       
         // --- 2. ABOUT REVEAL ---
