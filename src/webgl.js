@@ -1,62 +1,137 @@
-// webgl.js
-
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+// 1. Import GSAP
+import gsap from 'gsap';
 
-// Make this an async function to use await
-export default async function webgl() {
-    // --- 1. CORE SETUP ---
+
+function webgl() {
     const container = document.getElementById('model');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.z = 4;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // Create the scene
+    const scene = new THREE.Scene();
+
+    // Create the camera
+    const camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+    );
+    // Position the camera a bit further back to see the model better
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true // Make the canvas transparent
+    });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
+
     container.appendChild(renderer.domElement);
 
-    // --- 2. LIGHTING ---
-    new RGBELoader().load('https://perception-pod.netlify.app/envirornment.hdr', (texture) => {
-        const pmremGenerator = new THREE.PMREMGenerator(renderer);
-        pmremGenerator.compileEquirectangularShader();
-        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-        scene.environment = envMap;
-        texture.dispose();
-        pmremGenerator.dispose();
-    });
+    const rgbeLoader = new RGBELoader();
+    rgbeLoader.load(
+        'https://perception-pod.netlify.app/enviornment.hdr', // A neutral studio HDR file
+        (texture) => {
+            // FIX: Add this line to prevent the WebGL warning.
+            texture.flipY = false;
 
-    // --- 3. MODEL LOADING ---
-    // Use a promise to know when the model is fully loaded
-    const loadModel = new Promise((resolve, reject) => {
-        const loader = new GLTFLoader();
-        loader.load(
-            'https://perception-pod.netlify.app/dry_flower.glb',
-            (gltf) => {
-                const model = gltf.scene;
-                scene.add(model);
-                resolve(model); // Resolve the promise with the loaded model
-            },
-            undefined,
-            (error) => reject(error)
-        );
-    });
+            // The texture needs to be processed to be used as an environment map
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+            const envMap = pmremGenerator.fromEquirectangular(texture).texture;
 
-    // Wait for the model to finish loading
-    const model = await loadModel;
+            // Set the environment map for the entire scene
+            scene.environment = envMap;
 
-    // --- 4. RESIZE HANDLER ---
+            // Clean up to free memory
+            texture.dispose();
+            pmremGenerator.dispose();
+        },
+        undefined,
+        (error) => {
+            console.error("An error occurred loading the HDR environment map.", error);
+        }
+    );
+
+
+    let model;
+
+    const loader = new GLTFLoader();
+    loader.load(
+        'https://perception-pod.netlify.app/dry_flower.glb',
+        (gltf) => {
+            model = gltf.scene;
+            console.log("Model loaded successfully.");
+
+            // --- Calculate final position and scale ---
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const desiredSize = 3;
+            const finalScale = desiredSize / maxDim;
+            const finalPosition = { x: -center.x, y: -center.y, z: -center.z };
+
+            // --- 2. Set the INITIAL state for the animation ---
+            // Start scaled down to nothing
+            model.scale.set(0, 0, 0);
+            // Start below its final centered position
+            model.position.set(finalPosition.x, finalPosition.y - 1, finalPosition.z);
+
+            scene.add(model);
+            console.log("Model added to scene, starting animation.");
+
+            // --- 3. Animate to the FINAL state with GSAP ---
+            // Animate the scale
+            gsap.to(model.scale, {
+                delay: 3,
+                x: finalScale,
+                y: finalScale,
+                z: finalScale,
+                duration: 2.5, // 2 seconds
+                ease: "power4.inOut",
+            }, "<");
+
+            // Animate the position
+            gsap.to(model.position, {
+                x: finalPosition.x,
+                y: finalPosition.y,
+                z: finalPosition.z,
+                duration: 2.5, // Slightly longer duration for a nice effect
+                ease: "power4.inOut",
+            }, "<");
+        },
+        undefined,
+        (error) => {
+            console.error('An error happened during loading:', error);
+        }
+    );
+
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // if (model) {
+        //     model.rotation.y += 0.003;
+        // }
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- RESIZE HANDLER ---
     window.addEventListener('resize', () => {
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
     });
-
-    // --- 5. RETURN ESSENTIALS ---
-    // Return everything needed to control the scene from outside
-    return { scene, camera, renderer, model };
 }
+
+export default webgl;

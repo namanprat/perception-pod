@@ -89,15 +89,18 @@ function misc()
               scrub: true
             }
           });
-          gsap.to(".reveal_wrap", {
-            backgroundColor: "rgba(249, 255, 244, 0)",
-            scrollTrigger: {
-              trigger: ".reveal_wrap",
-              start: "top top",
-              end: "bottom 50%",
-              scrub: true
-            }
-          });
+          // gsap.to(".white_bg_wrap", {
+          //   backgroundColor: "rgba(249, 255, 244, 0)",
+          //   scrollTrigger: {
+          //     trigger: ".reveal_wrap",
+          //     markers: true,
+          //     start: "top 50%",
+          //     // end: "bottom 50%",
+          //     duration: 0.35,
+          //     ease: "power2.inOut",
+          //     // scrub: true
+          //   }
+          // });
         }
       
         // --- 3. CLOCK ---
