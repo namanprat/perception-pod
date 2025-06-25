@@ -39,27 +39,6 @@
 }
 
 
-._3d_wrap {
-  display: flex;
-  justify-content: center;
-  margin: auto;
-  margin-top: -80vh;
-  /* background-color: red; */
-  /* display: none; */
-  position: relative; /* CRITICAL: Establishes the positioning context for the canvas. */
-  width: 100%;
-  height: 100vh;
-  overflow: hidden; /* Ensures nothing from the scene renders outside this div */
-}
-
-
-.webgl canvas {
-  /* display: none; */
-
-  position: relative; /* This is what you asked for! */
-  width: 100%;        /* Make the canvas fill its container by default */
-  height: 100%;
-}
 
 #header-split {
   margin-top: -5px;
@@ -77,124 +56,10 @@
   height: var(--_typography---font-size--h3);
 }
 
-
-
-
-
-.webgl-experience {
-  position: relative;
-  width: 100%;
-}
-
-/* 
-================================================================
-CRITICAL STICKY CONTAINER STYLES
-================================================================
-*/
-
-/* 
-This is the MOST IMPORTANT part.
-- 'position: sticky' makes the element stick to the viewport.
-- 'top: 0' tells it to stick to the top edge once it scrolls there.
-- 'height: 100vh' makes the canvas container fill the entire screen height.
-*/
-.webgl_contain {
-  position: sticky;
+#model {
+  position: fixed;
   top: 0;
-  width: 100%;
-  height: 100vh;
-}
-
-/* 
-This ensures that the <canvas> element that Three.js creates
-will correctly fill the container div.
-*/
-.webgl {
-  width: 100%;
-  height: 100%;
-}
-
-
-/* 
-================================================================
-TRIGGER SECTION STYLES
-================================================================
-*/
-
-/* 
-CRITICAL: Define heights for your trigger sections.
-This gives ScrollTrigger a scroll distance to track. Without height,
-the trigger's start and end points would be the same.
-*/
-.section-hero {
-  height: 100vh; /* Gives one full screen height for the zoom animation */
-  width: 100%;
-}
-
-.section-dissect {
-  height: 120vh; /* Gives some space for the text to appear and be read */
-  width: 100%;
-  /* We need to use position:relative so the absolute-positioned text inside stays contained */
-  position: relative; 
-}
-
-
-/* 
-================================================================
-TEXT STYLING
-================================================================
-*/
-
-/* 
-The text-container holds both text blocks and positions them in the
-center of the screen over the canvas.
-- Using 'position: absolute' takes it out of the normal document flow.
-- 'top', 'left', 'transform' are used to center it perfectly.
-- 'pointer-events: none' is important so it doesn't block mouse interaction
-  with the canvas (if you were to add any).
-*/
-.text-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  width: 90%;
-  max-width: 1100px;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none; /* Allows mouse to pass through to canvas if needed */
-}
-
-/* 
-Styling for the individual text blocks.
-*/
-.text-left,
-.text-right {
-  width: 45%;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 2rem;
-  border-radius: 12px;
-  backdrop-filter: blur(5px);
-  
-  /* CRITICAL: Start with opacity 0 */
-  /* GSAP will animate this value to 1 to make the text appear. */
-  opacity: 0; 
-}
-
-.text-left h2, .text-right h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-/* 
-A simple final section to mark the end of the scroll animations.
-*/
-.section-after {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background-color: #000000;
+  left: 0;
+  outline: none;
+  z-index: -1; /* Puts the canvas behind all other content */
 }
