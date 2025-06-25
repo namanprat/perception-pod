@@ -1,112 +1,62 @@
+// webgl.js
+
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
+// Make this an async function to use await
+export default async function webgl() {
+    // --- 1. CORE SETUP ---
+    const container = document.getElementById('model');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.z = 4;
 
-function webgl() {
-  // --- Boilerplate remains the same ---
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 5;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    container.appendChild(renderer.domElement);
 
-  const renderer = new THREE.WebGLRenderer({
-      canvas: document.querySelector('#model'),
-      antialias: true,
-  });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setClearColor(0x000000, 0);
+    // --- 2. LIGHTING ---
+    new RGBELoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/neutral_white_1k.hdr', (texture) => {
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+        scene.environment = envMap;
+        texture.dispose();
+        pmremGenerator.dispose();
+    });
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(5, 5, 5);
-  scene.add(directionalLight);
+    // --- 3. MODEL LOADING ---
+    // Use a promise to know when the model is fully loaded
+    const loadModel = new Promise((resolve, reject) => {
+        const loader = new GLTFLoader();
+        loader.load(
+            'https://perception-pod.netlify.app/dry_flower.glb',
+            (gltf) => {
+                const model = gltf.scene;
+                scene.add(model);
+                resolve(model); // Resolve the promise with the loaded model
+            },
+            undefined,
+            (error) => reject(error)
+        );
+    });
 
-  const loader = new GLTFLoader();
-  
-  loader.load(
-      'https://perception-pod.netlify.app/dry_flower.glb',
-      function (gltf) {
-          const model = gltf.scene;
+    // Wait for the model to finish loading
+    const model = await loadModel;
 
-          // ================================================================
-          // THE KEY CHANGE IS HERE: We calculate everything up front.
-          // ================================================================
+    // --- 4. RESIZE HANDLER ---
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
 
-          // --- 1. Calculate the model's "base" size (at scale 1) ---
-          model.scale.set(1, 1, 1); // Temporarily set scale to 1 for accurate measurement
-          const modelBox = new THREE.Box3().setFromObject(model);
-          const baseSize = modelBox.getSize(new THREE.Vector3());
-          const baseModelHeight = baseSize.y;
-
-          // --- 2. Calculate the viewport's visible height in the 3D scene ---
-          const visibleHeight = 2 * Math.tan((camera.fov * Math.PI) / 180 / 2) * camera.position.z;
-          
-          // --- 3. Calculate the MAXIMUM scale the model can be to fit perfectly ---
-          const maxFitScale = visibleHeight / baseModelHeight;
-
-          // --- 4. Define your desired animation scales ---
-          const initialScale = 10;
-          const desiredFinalScale = initialScale * 0.8;
-
-          // --- 5. Determine the "safe" final scale for the animation ---
-          // It's the smaller value between what you WANT and what FITS.
-          const safeFinalScale = Math.min(desiredFinalScale, maxFitScale);
-
-          // --- Now, apply the initial scale to the model for the start of the animation ---
-          model.scale.set(initialScale, initialScale, initialScale);
-
-          // --- Use the initial height for the peeking calculation ---
-          const initialModelHeight = baseModelHeight * initialScale;
-          const peekAmount = 0.;
-          const bottomOfScreenY = -visibleHeight / 2;
-          model.position.y = bottomOfScreenY - (initialModelHeight / 2) + (initialModelHeight * peekAmount);
-          
-          scene.add(model);
-          
-          // --- GSAP Animation (now using our calculated `safeFinalScale`) ---
-          const tl = gsap.timeline({
-              scrollTrigger: {
-                  trigger: ".animation-section",
-                  start: "top bottom",
-                  end: "bottom bottom",
-                  scrub: 1,
-              },
-          });
-          
-          tl.to(model.position, {
-              y: 0,
-          })
-          .to(model.scale, {
-              // Animate to the guaranteed-to-fit scale
-              x: safeFinalScale,
-              y: safeFinalScale,
-              z: safeFinalScale,
-          }, "<");
-
-      },
-      undefined, 
-      function (error) {
-          console.error('An error happened while loading the GLB model:', error);
-      }
-  );
-
-  // --- Render loop and resize handler remain the same ---
-  function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-  }
-  animate();
-  
-  window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-
-      // NOTE: For a truly robust solution, you would re-run the scale 
-      // calculation logic here on resize. For now, this works on load.
-  });
+    // --- 5. RETURN ESSENTIALS ---
+    // Return everything needed to control the scene from outside
+    return { scene, camera, renderer, model };
 }
-
-export default webgl;

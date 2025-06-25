@@ -14,6 +14,7 @@ gsap.ticker.add((time) => {
 gsap.ticker.lagSmoothing(0);
 
 webgl()
+
 misc()
 const gradient = new Gradient()
 gradient.initGradient('#gradient-canvas')
