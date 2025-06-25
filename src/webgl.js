@@ -21,7 +21,7 @@ export default async function webgl() {
     container.appendChild(renderer.domElement);
 
     // --- 2. LIGHTING ---
-    new RGBELoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/neutral_white_1k.hdr', (texture) => {
+    new RGBELoader().load('https://perception-pod.netlify.app/envirornment.hdr', (texture) => {
         const pmremGenerator = new THREE.PMREMGenerator(renderer);
         pmremGenerator.compileEquirectangularShader();
         const envMap = pmremGenerator.fromEquirectangular(texture).texture;
