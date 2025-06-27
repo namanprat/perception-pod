@@ -43,7 +43,7 @@ function misc()
         // HERO REVEAL      
         let headerSplit = new SplitText("#header-split", {
           type: "words, lines", // Split into both lines and words
-          linesClass: "split-line-wrapper" // Add this class to the line containers
+          linesClass: "hero-line-wrapper"
         });
         
         const heroTl = gsap.timeline();
@@ -72,10 +72,10 @@ function misc()
           }, "<");
       
         // --- 2. ABOUT REVEAL ---
-        const contentTextEl = document.querySelector(".content_text");
-        const revealWrapEl = document.querySelector(".reveal_wrap");
+        const contentText = document.querySelector(".content_text");
+        const revealWrap = document.querySelector(".reveal_wrap");
       
-        if (contentTextEl && revealWrapEl) {
+        if (contentText && revealWrap) {
           let text = new SplitText(".content_text", {
             type: "words"
           });
@@ -89,20 +89,48 @@ function misc()
               scrub: true
             }
           });
-          // gsap.to(".white_bg_wrap", {
-          //   backgroundColor: "rgba(249, 255, 244, 0)",
-          //   scrollTrigger: {
-          //     trigger: ".reveal_wrap",
-          //     markers: true,
-          //     start: "top 50%",
-          //     // end: "bottom 50%",
-          //     duration: 0.35,
-          //     ease: "power2.inOut",
-          //     // scrub: true
-          //   }
-          // });
         }
-      
+
+
+// --- SETUP ---
+let headerText = new SplitText("#header-reveal", {
+   type: "words, lines", 
+          linesClass: "header-line-wrapper"
+});
+let bodyText = new SplitText("#body-reveal", {
+     type: "words, lines", // Split into both lines and words
+          linesClass: "body-line-wrapper"
+});
+
+// --- TIMELINE AND SCROLLTRIGGER ---
+const revealTl = gsap.timeline({
+    scrollTrigger: {
+        trigger: "#header-reveal", 
+        start: "top 75%", 
+    }
+});
+revealTl
+    .from(headerText.words, {
+        yPercent: 105,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 1.5,
+        ease: "power4.inOut",
+    })
+    .from('.blocker_wrap', {
+      opacity: 0,
+      duration: 1.5,
+      ease: "power4.inOut",
+  }, "<")
+    .from(bodyText.words, {
+        yPercent: 100,
+        stagger: 0.02,
+        duration: 1.5,
+        ease: "power4.inOut",
+    }, "<");
+
+
+    
         // --- 3. CLOCK ---
         const clockEl = document.getElementById("clock");
         if (clockEl) {

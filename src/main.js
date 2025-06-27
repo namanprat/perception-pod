@@ -1,7 +1,7 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
-import webgl from './webgl'
+ import brev from './webgl';
 import 'lenis/dist/lenis.css'
 import { Gradient } from './gradient'
 
@@ -13,8 +13,10 @@ gsap.ticker.add((time) => {
 });
 gsap.ticker.lagSmoothing(0);
 
-webgl()
 
+
+
+brev()
 misc()
 const gradient = new Gradient()
 gradient.initGradient('#gradient-canvas')
