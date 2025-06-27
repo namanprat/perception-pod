@@ -7,9 +7,9 @@
   --gradient-color-4: #FBECFF;
 }
 :root {
-  --space: 5%;
+  --space: 20%;
   --angle: 133deg;
-  --imgsize: 50%;
+  --imgsize: 80%;
   --hyp: 0;
   --o: 1;
   --mx: 50%;
