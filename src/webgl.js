@@ -17,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 // Position the camera a bit further back to see the model better
-camera.position.z = 5;
+camera.position.z = 22;
 
 // --- MOUSE PARALLAX SETUP ---
 const mouse = new THREE.Vector2();
@@ -79,16 +79,16 @@ loader.load(
         const center = box.getCenter(new THREE.Vector3());
 
         const maxDim = Math.max(size.x, size.y, size.z);
-        const desiredSize = 2;
+        const desiredSize = 5;
         const finalScale = desiredSize / maxDim;
 
         // --- INITIAL STATE: Show only top/petals, zoomed in ---
         // Start scaled down for entrance animation
-        model.scale.set(0, 0, 0);
+        model.scale.set(4 , 4, 4);
         
         // Position to show top/petals (assuming petals are at the top)
         // We'll position the model lower so the top/petals are centered, and zoom in more
-        const petalFocusY = center.y + (size.y * 3); // Focus on top petals
+        const petalFocusY = center.y + (size.y * 0); // Focus on top petals
         model.position.set(-center.x, -petalFocusY, -center.z);
 
         scene.add(model);
@@ -98,7 +98,7 @@ loader.load(
         const entranceTl = gsap.timeline({ defaults: { duration: 3, ease: "power4.inOut" }});
 
         // Scale up and position for petal focus (zoomed in)
-        const petalScale = finalScale * 2.25; // Zoom in to show top/petals
+        const petalScale = finalScale * 5; // Zoom in to show top/petals
         
         entranceTl.to(model.scale, {
             delay: 1,
