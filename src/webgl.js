@@ -164,7 +164,7 @@ loader.load(
 
         const maxDim = Math.max(size.x, size.y, size.z);
         const desiredSize = 5;
-        const finalScale = (desiredSize / maxDim) * 1.2; // 20% bigger final size
+        const finalScale = (desiredSize / maxDim) * 1.6; // 20% bigger final size
 
         // --- POSITIONING CALCULATIONS ---
         const modelCenter = {

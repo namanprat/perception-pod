@@ -145,7 +145,7 @@ revealTl
           setInterval(getTime, 1000);
         }
       
-        // --- 4. CARDS ---
+        // --- 4. CARDS (OPTIMIZED) ---
         const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
         const cards = document.querySelectorAll(".card_wrap");
       
@@ -153,6 +153,9 @@ revealTl
           const cardInner = card.querySelector(".card_inner");
           const highlight = card.querySelector(".card-highlight");
           let isFlipped = false;
+          let animationId = null;
+          let lastTime = 0;
+          const throttleDelay = 16; // ~60fps
       
           gsap.set(card, { transformPerspective: 1000 });
       
@@ -177,13 +180,21 @@ revealTl
       
           if (isDesktop) {
             let leaveTween = null;
+            
             card.addEventListener("mouseenter", () => {
               if (leaveTween) leaveTween.kill();
               if (highlight && !isFlipped) {
                 gsap.to(highlight, { opacity: 1, duration: 0.2 });
               }
             });
+            
             card.addEventListener("mouseleave", () => {
+              // Cancel any pending animation frame
+              if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+              }
+              
               leaveTween = gsap.to(card, {
                 rotationX: 0,
                 rotationY: 0,
@@ -193,28 +204,46 @@ revealTl
               });
               if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
             });
+            
             card.addEventListener("mousemove", (e) => {
               if (gsap.isTweening(cardInner) || isFlipped) return;
-              const rect = card.getBoundingClientRect();
-              const mouseX = e.clientX - rect.left;
-              const mouseY = e.clientY - rect.top;
-              const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
-              const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
-      
-              gsap.to(card, {
-                rotationX: targetRotateX,
-                rotationY: targetRotateY,
-                scale: 1.05,
-                duration: 0.6,
-                ease: "power2.out"
-              });
-      
-              if (highlight) {
-                highlight.style.setProperty("--x", `${mouseX}px`);
-                highlight.style.setProperty("--y", `${mouseY}px`);
-                highlight.style.setProperty("--gx", `${(mouseX / rect.width) * 100}%`);
-                highlight.style.setProperty("--gy", `${(mouseY / rect.height) * 100}%`);
+              
+              const now = performance.now();
+              if (now - lastTime < throttleDelay) return;
+              lastTime = now;
+              
+              // Cancel previous animation frame if it exists
+              if (animationId) {
+                cancelAnimationFrame(animationId);
               }
+              
+              animationId = requestAnimationFrame(() => {
+                const rect = card.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
+                const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
+        
+                gsap.to(card, {
+                  rotationX: targetRotateX,
+                  rotationY: targetRotateY,
+                  scale: 1.05,
+                  duration: 0.6,
+                  ease: "power2.out"
+                });
+        
+                if (highlight) {
+                  // Use GSAP's set method for better performance
+                  gsap.set(highlight, {
+                    "--x": `${mouseX}px`,
+                    "--y": `${mouseY}px`,
+                    "--gx": `${(mouseX / rect.width) * 100}%`,
+                    "--gy": `${(mouseY / rect.height) * 100}%`
+                  });
+                }
+                
+                animationId = null;
+              });
             });
           }
         });
