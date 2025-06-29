@@ -16,7 +16,7 @@ function brev() {
   // Scene + camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
-    60,
+    30,
     container.clientWidth / container.clientHeight,
     0.1,
     1000
@@ -42,7 +42,7 @@ function brev() {
   // HDR environment
   const rgbeLoader = new RGBELoader();
   rgbeLoader.load(
-    'https://perception-pod.netlify.app/environment.hdr',
+    'https://perception-pod.netlify.app/enviornment.hdr',
     texture => {
       texture.flipY = false;
       const pmrem = new THREE.PMREMGenerator(renderer);
