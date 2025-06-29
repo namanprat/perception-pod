@@ -147,11 +147,13 @@ revealTl
       
         // --- 4. CARDS (OPTIMIZED) ---
         const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
+        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
         const cards = document.querySelectorAll(".card_wrap");
       
         cards.forEach((card) => {
           const cardInner = card.querySelector(".card_inner");
           const highlight = card.querySelector(".card-highlight");
+          const cardSubject = card.querySelector(".card-subject");
           let isFlipped = false;
           let animationId = null;
           let lastTime = 0;
@@ -160,6 +162,12 @@ revealTl
           gsap.set(card, { transformPerspective: 1000 });
       
           card.addEventListener("click", () => {
+            // Cancel any pending animation frame
+            if (animationId) {
+              cancelAnimationFrame(animationId);
+              animationId = null;
+            }
+            
             isFlipped = !isFlipped;
             gsap.to(cardInner, {
               rotationY: isFlipped ? 180 : 0,
@@ -167,6 +175,24 @@ revealTl
               ease: "power3.inOut",
               onStart: () => {
                 if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
+                // Reset card parallax rotation only (keep scale)
+                if (!isTouchDevice) {
+                  gsap.to(card, {
+                    rotationX: 0,
+                    rotationY: 0,
+                    duration: 0.7,
+                    ease: "power3.inOut"
+                  });
+                }
+                // Reset highlight position to center
+                if (highlight) {
+                  gsap.set(highlight, {
+                    "--x": "50%",
+                    "--y": "50%",
+                    "--gx": "50%",
+                    "--gy": "50%"
+                  });
+                }
               },
               onComplete: () => {
                 if (isDesktop && !isFlipped && highlight) {
@@ -202,11 +228,24 @@ revealTl
                 duration: 1,
                 ease: "elastic.out(1, 0.75)"
               });
+              
+              // Reset card_subject position and rotation
+              if (cardSubject) {
+                gsap.to(cardSubject, {
+                  x: 0,
+                  y: 0,
+                  rotationX: 0,
+                  rotationY: 0,
+                  duration: 1,
+                  ease: "elastic.out(1, 0.75)"
+                });
+              }
+              
               if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
             });
             
             card.addEventListener("mousemove", (e) => {
-              if (gsap.isTweening(cardInner) || isFlipped) return;
+              if (gsap.isTweening(cardInner) || isTouchDevice) return;
               
               const now = performance.now();
               if (now - lastTime < throttleDelay) return;
@@ -221,16 +260,43 @@ revealTl
                 const rect = card.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
-                const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
-                const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
-        
-                gsap.to(card, {
-                  rotationX: targetRotateX,
-                  rotationY: targetRotateY,
-                  scale: 1.05,
-                  duration: 0.6,
-                  ease: "power2.out"
-                });
+                
+                // Calculate movement multipliers for depth effect
+                const moveX = ((mouseX - rect.width / 2) / rect.width) * 20;
+                const moveY = ((mouseY - rect.height / 2) / rect.height) * 20;
+                
+                // Always apply scale, but only apply rotation if not flipped
+                if (!isFlipped) {
+                  const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
+                  const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
+                  
+                  gsap.to(card, {
+                    rotationX: targetRotateX,
+                    rotationY: targetRotateY,
+                    scale: 1.05,
+                    duration: 0.6,
+                    ease: "power2.out"
+                  });
+                } else {
+                  // When flipped, only apply scale
+                  gsap.to(card, {
+                    scale: 1.05,
+                    duration: 0.6,
+                    ease: "power2.out"
+                  });
+                }
+                
+                // Animate card_subject for 3D depth effect (works on both sides)
+                if (cardSubject) {
+                  gsap.to(cardSubject, {
+                    x: moveX,
+                    y: moveY,
+                    rotationX: -moveY * 0.5,
+                    rotationY: moveX * 0.5,
+                    duration: 0.6,
+                    ease: "power2.out"
+                  });
+                }
         
                 if (highlight) {
                   // Use GSAP's set method for better performance
