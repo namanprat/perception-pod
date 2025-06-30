@@ -16,13 +16,16 @@ function brev() {
   // Scene + camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
-    30,
+    60,
     container.clientWidth / container.clientHeight,
     0.1,
     1000
   );
-  camera.position.z = 22;
-
+  
+  // Initial camera setup - positioned to look at center, will be adjusted based on scroll
+  const initialCameraZ = 30;
+  camera.position.set(0, 10, initialCameraZ);
+  
   // Mouse parallax
   const mouse = new THREE.Vector2();
   container.addEventListener('mousemove', e => {
@@ -73,9 +76,12 @@ function brev() {
     return list;
   }
 
+  // Camera focus and zoom variables
+  let modelCenter = new THREE.Vector3(0, 0, 0);
+  let currentLookAtY = 0; // Will be updated based on scroll
+
   // Load GLTF
   let model;
-  let focusPoint = new THREE.Vector3(); // ◀◀ for camera focus on Crust
 
   new GLTFLoader().load(
     'https://perception-pod.netlify.app/test.glb',
@@ -105,38 +111,21 @@ function brev() {
         OuterCore: !!outerCoreMesh
       });
 
-      // ─── FOCUS CAMERA ON CRUST MESH ──────────────────────────── ◀◀
-      // Compute world-space center of Crust (or fallback to model center)
-      if (crustMesh) {
-        crustMesh.getWorldPosition(focusPoint);
-      } else {
-        new THREE.Box3().setFromObject(model).getCenter(focusPoint);
-      }
-      // Position camera relative to focusPoint
-      camera.position.set(
-        focusPoint.x,
-        focusPoint.y,
-        focusPoint.z + 22
-      );
-      camera.lookAt(focusPoint);
-      // ────────────────────────────────────────────────────────────
-
-      // compute overall bounds & scaling
+      // Get model center for camera targeting
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
+      modelCenter = box.getCenter(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
       const desiredSize = 5;
       const finalScale = (desiredSize / maxDim) * 1.2;
 
-      // crust focus offset for entry animation
-      const crustCenterLocal = new THREE.Vector3();
-      if (crustMesh) {
-        const cb = new THREE.Box3().setFromObject(crustMesh);
-        cb.getCenter(crustCenterLocal);
-      }
-      const crustFocus = crustCenterLocal.clone().multiplyScalar(-1);
-      crustFocus.z = -center.z;
+      // Calculate 50vh offset - this will be our initial look-at point
+      const viewportHeight = window.innerHeight;
+      const initialYOffset = (viewportHeight * 0.5) / 100; // Convert 50vh to world units (approximate)
+      
+      // Set initial camera look-at point (50vh from top)
+      currentLookAtY = modelCenter.y + initialYOffset;
+      camera.lookAt(modelCenter.x, currentLookAtY, modelCenter.z);
 
       // explosion offsets
       const explosionSpacing = maxDim * 0.8;
@@ -154,7 +143,7 @@ function brev() {
 
       // initial transform (entry state)
       model.scale.set(0.1, 0.1, 0.1);
-      model.position.copy(crustFocus);
+      model.position.copy(modelCenter);
       model.rotation.x = Math.PI * 0.15;
 
       scene.add(model);
@@ -164,21 +153,36 @@ function brev() {
       gsap.timeline({ defaults: { duration: 3, ease: 'power4.inOut' } })
         .to(model.scale, { delay: 1, x: crustScale, y: crustScale, z: crustScale }, 0);
 
-      // scroll-triggered explosion
+      // scroll-triggered animation with new camera logic
       ScrollTrigger.create({
-        trigger: container.parentElement,
+        trigger: '.webgl_contain', // Target the webgl_contain element
         start: 'top top',
         end: 'bottom bottom',
         scrub: 1,
         onUpdate: self => {
           const p = self.progress;
           const half = 0.5;
+          
+          // Camera zoom and centering logic
+          // Start at initialCameraZ, zoom out by 30% at the end
+          const zoomOutFactor = 0.3;
+          const finalCameraZ = initialCameraZ * (1 + zoomOutFactor);
+          camera.position.z = initialCameraZ + (finalCameraZ - initialCameraZ) * p;
+          
+          // Gradually center the camera look-at point
+          const targetLookAtY = modelCenter.y + (initialYOffset * (1 - p));
+          currentLookAtY = targetLookAtY;
+          
+          // Keep camera centered on X and Z
+          camera.position.x = modelCenter.x;
+          camera.position.y = modelCenter.y;
+          
           if (p <= half) {
             const t = p / half;
             model.rotation.y = t * Math.PI * 0.5;
             const cs = crustScale + (finalScale - crustScale) * t;
             model.scale.set(cs, cs, cs);
-            model.position.lerpVectors(crustFocus, new THREE.Vector3(0,0,0), t);
+            model.position.lerpVectors(modelCenter, new THREE.Vector3(0,0,0), t);
             [crustMesh, mantleMesh, outerCoreMesh].forEach((m, i) => {
               if (m) m.position.copy(originals[['crust','mantle','outerCore'][i]]);
             });
@@ -205,10 +209,15 @@ function brev() {
   // render + parallax
   function animate() {
     requestAnimationFrame(animate);
-    // Parallax on X around focusPoint.x
-    const targetX = focusPoint.x + mouse.x;
+    
+    // Apply subtle mouse parallax only on X axis
+    const parallaxStrength = 2; // Reduced for more subtle effect
+    const targetX = modelCenter.x + mouse.x * parallaxStrength;
     camera.position.x += (targetX - camera.position.x) * 0.05;
-    camera.lookAt(focusPoint); // ◀◀ keep looking at Crust
+    
+    // Always look at the current target point
+    camera.lookAt(modelCenter.x, currentLookAtY, modelCenter.z);
+    
     renderer.render(scene, camera);
   }
   animate();
