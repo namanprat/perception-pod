@@ -15,7 +15,7 @@
   --mx: 50%;
   --my: 50%;
 }
-
+.contact_wrap,
 .preloader_wrap {
   display: flex;
 }
