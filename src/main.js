@@ -1,10 +1,12 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
- import brev from './webgl';
+//  import brev from './webgl';
 import 'lenis/dist/lenis.css'
-import { Gradient } from './gradient'
+import menu from './menuReveal'
+import Gradient from './gradient';
 
+const gradient = new Gradient();
 const lenis = new Lenis();
 
 lenis.on('scroll', ScrollTrigger.update);
@@ -16,10 +18,11 @@ gsap.ticker.lagSmoothing(0);
 
 
 
-brev()
+// brev()
 misc()
-const gradient = new Gradient()
-gradient.initGradient('#gradient-canvas')
+menu()
+// Gradient()
+
 
 console.log("%cDesigned and built by https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
 {/* <script type="module" src="https://perception-pod.netlify.app/main.js"></script> */}

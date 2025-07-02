@@ -1,21 +1,16 @@
 function misc()
 {
     document.addEventListener("DOMContentLoaded", function () {
-        // Register all necessary GSAP plugins at once
         gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, Flip);
       
-        // --- A. SET INITIAL STATE ---
         gsap.set("#nav", { yPercent: -100 });
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
-    gsap.set(".contact_wrap", { autoAlpha: 0 });
 
 
          const magneticElements = document.querySelectorAll('.is-magnetic');
 
-    // Define the strength of the magnetic effect
     const strength = 50;
 
-    // Add a mousemove event listener to each magnetic element
     magneticElements.forEach(elem => {
         elem.addEventListener('mousemove', (e) => {
             const rect = elem.getBoundingClientRect(); // Get the position of the element
@@ -32,67 +27,17 @@ function misc()
             });
         });
 
-        // Add a mouseleave event listener to reset the element's position
         elem.addEventListener('mouseleave', () => {
-            // Animate the element back to its original position (0,0)
             gsap.to(elem, {
                 x: 0,
                 y: 0,
                 duration: 1.2, // A bit longer to feel like a slow release
-                ease: 'elastic.out(1, 0.3)', // A bouncy, elastic return
+                ease: 'elastic.out(1, 0.6)', // A bouncy, elastic return
             });
         });
     });
 
-    // script.js
-document.addEventListener('DOMContentLoaded', () => {
-
-    // --- 1. SET INITIAL STATE ---
-    // Hide the contact wrapper initially. autoAlpha sets opacity to 0 and visibility to 'hidden'.
-
-    // --- 2. CREATE THE "OPEN" TIMELINE ---
-    // We create a timeline that is paused by default.
-    const openTl = gsap.timeline({ paused: true });
-
-    openTl
-        // Animate the wrapper from autoAlpha:0 to 1
-        .to('.contact_wrap', { 
-            autoAlpha: 1, 
-            duration: 0.4, 
-            ease: 'power2.inOut' 
-        })
-        // Then, animate the container's width from 0 to 'auto'
-        // Using a fromTo() is perfect for this.
-        .fromTo('.contact-contain', { 
-            width: 0 
-        }, { 
-            width: 'auto', 
-            ease: 'power3.out' 
-        }, '-=0.2'); // Overlap with the previous animation slightly for a smoother effect
-
-    // --- 3. EVENT LISTENERS TO CONTROL THE TIMELINE ---
-
-    // When .contact-flip is clicked, play the timeline forward
-    document.querySelector('.contact-flip').addEventListener('click', () => {
-        openTl.play();
-    });
-
-    // When the close button is clicked, reverse the timeline
-    document.querySelector('.contact-close').addEventListener('click', () => {
-        openTl.reverse();
-    });
-
-    // When the Escape key is pressed, check if the modal is open and then reverse
-    document.addEventListener('keydown', (event) => {
-        // Check if the key is 'Escape' and the timeline is active and not already reversing
-        if (event.key === 'Escape' && openTl.progress() > 0 && !openTl.reversed()) {
-            openTl.reverse();
-        }
-    });
-
-});
       
-        // --- 1. PRELOADER (Refactored into a Timeline) ---
         const preloaderTl = gsap.timeline();
         preloaderTl
           .to(".preloader-wordmark", { opacity: 1, yPercent: 0, duration: 0.2 })
