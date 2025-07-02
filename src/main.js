@@ -1,7 +1,7 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
-//  import brev from './webgl';
+import brev from './webgl';
 import 'lenis/dist/lenis.css'
 import menu from './menuReveal'
 import Gradient from './gradient';
@@ -18,10 +18,9 @@ gsap.ticker.lagSmoothing(0);
 
 
 
-// brev()
+brev()
 misc()
 menu()
-// Gradient()
 
 
 console.log("%cDesigned and built by https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
