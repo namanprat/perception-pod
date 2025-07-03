@@ -26,6 +26,11 @@ textarea,
 .preloader_wrap {
   display: flex;
 }
+.h3_wrap {
+  /* width: max-content; */
+  /* text-wrap: nowrap; */
+  overflow: hidden;
+}
 .card-highlight {
   z-index: 2 !important;
   position: absolute;
