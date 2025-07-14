@@ -394,7 +394,7 @@ revealTl
           const menuWrapEl = navWrap.querySelector(".menu_wrap");
           const menuBaseEl = navWrap.querySelector(".menu_base");
           const menuLinkEls = navWrap.querySelectorAll(".menu_link");
-          const flipDuration = 0.6;
+          const flipDuration = 0.75;
       
           // Check if all essential elements exist before proceeding
           if (!hamburgerEl || !menuContainEl || !flipItemEl || !menuWrapEl || !menuBaseEl) {
@@ -423,12 +423,13 @@ revealTl
           tl.to(navLineEls[0], { y: 4, rotate: 45, duration: flipDuration }, "<");
           tl.to(navLineEls[1], { y: -4, rotate: -45, duration: flipDuration }, "<");
           tl.from(menuLinkEls, {
-            opacity: 0,
-            yPercent: 100,
-            duration: 0.35,
-            stagger: { amount: 0.2 },
+            delay: -0.4,
+            ease: "power3.inOut",
+            y: '-100',
+            duration: 2,
+            stagger: 0.05 ,
             onReverseComplete: () => flip(false)
-          });
+          }, "<");
       
           function openMenu(open) {
             if (!tl.isActive()) {
@@ -455,10 +456,7 @@ revealTl
           });
         });
       
-        // --- 7. SCROLL-TO LINKS (Refactored) ---
-        // To use this, add class="scroll-link" and data-scroll-to=".target-selector"
-        // to your <a> tags in the HTML.
-        // Example: <a href="#" class="scroll-link" data-scroll-to=".about_wrap">About</a>
+
       
         const scrollLinks = document.querySelectorAll(".scroll-link");
       
