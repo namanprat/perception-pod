@@ -62,7 +62,7 @@ function setupModelViewer() {
   gltfLoader.setDRACOLoader(dracoLoader);
 
   gltfLoader.load(
-    'https://perception-pod.netlify.app/flower.glb',
+    'https://perception-pod.netlify.app/flower6.glb',
     (gltf) => {
       const model = gltf.scene;
 
