@@ -1,8 +1,8 @@
 import * as THREE from 'three';
+import * as POSTPROCESSING from "postprocessing"
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js';
-
 
 function setupModelViewer() {
   const container = document.getElementById('model');
@@ -14,13 +14,15 @@ function setupModelViewer() {
   // 1. Renderer Setup
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
-    alpha: true
+    alpha: true,
   });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1.2;
+  renderer.shadowMap.enabled = false;
+  renderer.physicallyCorrectLights = true;
 
   container.appendChild(renderer.domElement);
 
@@ -34,29 +36,88 @@ function setupModelViewer() {
   );
   camera.position.set(0, 5, 12);
 
-  const hdrLoader = new UltraHDRLoader();
-hdrLoader.load('https://perception-pod.netlify.app/san_giuseppe_bridge_2k.jpg', (hdr) => {
-  hdr.mapping = THREE.EquirectangularReflectionMapping;
-  scene.background = hdr;
-  scene.environment = hdr;
-});
+  // 3. Post-processing Setup
+  const composer = new POSTPROCESSING.EffectComposer(renderer);
 
-  // 3. Controls
+  // Add a render pass for the main scene
+  const renderPass = new POSTPROCESSING.RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  // Enhanced realistic post-processing effects (using only available effects)
+  const bloomEffect = new POSTPROCESSING.BloomEffect({
+    intensity: 0.4,
+    luminanceThreshold: 0.9,
+    luminanceSmoothing: 0.1
+  });
+
+  // Simple tone mapping
+  const toneMapEffect = new POSTPROCESSING.ToneMappingEffect({
+    mode: POSTPROCESSING.ToneMappingMode.ACES_FILMIC
+  });
+
+  // Add subtle noise for film-like quality
+  const noiseEffect = new POSTPROCESSING.NoiseEffect({
+    premultiply: true,
+    blendFunction: POSTPROCESSING.BlendFunction.SCREEN
+  });
+  noiseEffect.blendMode.opacity.value = 0.05;
+
+  const effectPass = new POSTPROCESSING.EffectPass(camera, 
+    toneMapEffect, 
+    bloomEffect, 
+    noiseEffect
+  );
+  composer.addPass(effectPass);
+
+  // 4. HDR Environment
+  const hdrLoader = new UltraHDRLoader();
+  hdrLoader.load('https://perception-pod.netlify.app/san_giuseppe_bridge_2k.jpg', (hdr) => {
+    hdr.mapping = THREE.EquirectangularReflectionMapping;
+    // scene.background = hdr;
+    scene.environment = hdr;
+  });
+
+  // 5. Controls
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.5;
+  controls.autoRotateSpeed = 0.3;
+  controls.enableZoom = true;
+  controls.enablePan = false;
+  controls.minDistance = 3;
+  controls.maxDistance = 20;
+  controls.maxPolarAngle = Math.PI * 0.75;
 
-  // 4. Lighting
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 15);
-  directionalLight.position.set(5, 10, 5);
-  scene.add(directionalLight);
-  
-  // Add ambient light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  // 6. Realistic Lighting Setup
+  // Key light - main directional light
+  const keyLight = new THREE.DirectionalLight(0xff8a96, 3);
+  keyLight.position.set(5, 5, 2);
+  keyLight.castShadow = false;
+  scene.add(keyLight);
+
+  // Fill light - softer secondary light
+  const fillLight = new THREE.DirectionalLight(0xff8a96, 1);
+  fillLight.position.set(-5, 8, -5);
+  fillLight.castShadow = false;
+  scene.add(fillLight);
+
+  // Rim light - for edge definition
+  const rimLight = new THREE.DirectionalLight(0xff8a96, 2);
+  rimLight.position.set(0, 5, -10);
+  rimLight.castShadow = false;
+  scene.add(rimLight);
+
+  // Ambient light - soft global illumination
+  const ambientLight = new THREE.AmbientLight(0xff8a96, 0.4);
   scene.add(ambientLight);
 
-  // 5. Model Loading
+  // Add hemisphere light for more natural lighting
+  const hemisphereLight = new THREE.HemisphereLight(0xff8a96, 0x444444, 0.6);
+  hemisphereLight.position.set(0, 20, 0);
+  scene.add(hemisphereLight);
+
+  // 7. Model Loading
   const gltfLoader = new GLTFLoader();
 
   gltfLoader.load(
@@ -66,13 +127,32 @@ hdrLoader.load('https://perception-pod.netlify.app/san_giuseppe_bridge_2k.jpg', 
 
       model.traverse((child) => {
         if (child.isMesh) {
+          // Disable shadow casting and receiving
+          child.castShadow = false;
+          child.receiveShadow = false;
+          
           if (child.material) {
-            // Handle transparency issues
+            // Enhanced material properties for realism
+            if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
+              // Enhance surface properties
+              child.material.roughness = child.material.roughness || 0.4;
+              child.material.metalness = child.material.metalness || 0.0;
+              child.material.envMapIntensity = 1.5;
+              
+              // Improve normal mapping
+              if (child.material.normalMap) {
+                child.material.normalScale.set(1.5, 1.5);
+              }
+            }
+            
+            // Handle transparency with improved settings
             if (child.material.transparent || child.material.opacity < 1) {
               child.material.transparent = true;
               child.material.depthWrite = false;
               child.material.side = THREE.DoubleSide;
+              child.material.alphaTest = 0.01;
             }
+            
             child.material.needsUpdate = true;
           }
         }
@@ -93,31 +173,27 @@ hdrLoader.load('https://perception-pod.netlify.app/san_giuseppe_bridge_2k.jpg', 
       controls.update();
 
       scene.add(model);
-      console.log('Model loaded and added to the scene.');
     },
-    (xhr) => {
-      if (xhr.total > 0) {
-        console.log(`Model loading: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
-      }
-    },
+    undefined,
     (error) => {
-      console.error('An error happened while loading the model:', error);
+      console.error('Model loading error:', error);
     }
   );
 
-  // 6. Render Loop
+  // 8. Render Loop
   function animate() {
     requestAnimationFrame(animate);
     controls.update();
-    renderer.render(scene, camera);
+    composer.render(); // Use composer instead of renderer
   }
   animate();
 
-  // 7. Handle Window Resizing
+  // 9. Handle Window Resizing
   window.addEventListener('resize', () => {
     camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
+    composer.setSize(container.clientWidth, container.clientHeight);
   });
 }
 
