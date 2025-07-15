@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 function setupModelViewer() {
@@ -11,77 +10,117 @@ function setupModelViewer() {
     return;
   }
 
-  // 1. Renderer Setup (for Highest Quality)
+  // 1. Renderer Setup
   const renderer = new THREE.WebGLRenderer({
-    antialias: true, // Smooths edges
-    alpha: true      // Allows for a transparent background
+    antialias: true,
+    alpha: true
   });
-  renderer.setPixelRatio(window.devicePixelRatio); // Render at native screen resolution
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.outputColorSpace = THREE.SRGBColorSpace; // Ensures correct color output
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic tone mapping for realistic lighting
-  renderer.toneMappingExposure = 1.0; // Adjust exposure for brightness
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  // --- ENHANCEMENT: Enable shadow mapping for realistic shadows ---
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer, more realistic shadows
+
   container.appendChild(renderer.domElement);
 
   // 2. Scene and Camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
-    50, // A slightly narrower field of view can feel more cinematic
+    50,
     container.clientWidth / container.clientHeight,
     0.1,
     1000
   );
-  camera.position.set(0, 0, 10); // Set a default distance
+  camera.position.set(0, 5, 12); // Adjusted camera position for a better initial view
 
-  // 3. Controls for Interaction (OrbitControls)
+  // 3. Controls
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; // Adds a smooth, inertia-like effect to rotation
-  // controls.autoRotate = false; // By default, this is false. Explicitly set or remove the line.
+  controls.enableDamping = true;
+  controls.autoRotate = true; // --- ENHANCEMENT: Add a subtle auto-rotation ---
+  controls.autoRotateSpeed = 0.5;
 
   // 4. Lighting and Environment
-  const rgbeLoader = new RGBELoader();
-  rgbeLoader.load(
+  new UltraHDRLoader().load(
     'https://perception-pod.netlify.app/enviornment.hdr',
     (texture) => {
       texture.mapping = THREE.EquirectangularReflectionMapping;
       scene.environment = texture;
-      console.log('HDR environment loaded.');
+      // --- ENHANCEMENT: Make the environment visible as the background ---
+      scene.background = texture;
+      console.log('UltraHDR environment loaded.');
     },
     undefined,
-    (err) => console.error('Failed to load HDR environment:', err)
+    (err) => console.error('Failed to load UltraHDR environment:', err)
   );
   
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-  directionalLight.position.set(5, 10, 7.5);
-  scene.add(directionalLight);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 15); // Increased intensity slightly
+  directionalLight.position.set(0, 2, 2);
+  // --- ENHANCEMENT: Configure the light to cast shadows ---
+  // directionalLight.castShadow = true;
+  directionalLight.shadow.mapSize.width = 2048; // Higher resolution for sharper shadows
+  directionalLight.shadow.mapSize.height = 2048;
+  // --- ENHANCEMENT: Adjust the shadow camera frustum to fit the scene ---
 
-  // 5. Model Loading (with Draco)
+  
+  scene.add(directionalLight);
+  
+  // Add an ambient light to soften shadows slightly
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  scene.add(ambientLight);
+
+
+  // 5. Model Loading (without Draco)
   const gltfLoader = new GLTFLoader();
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-  gltfLoader.setDRACOLoader(dracoLoader);
 
   gltfLoader.load(
     'https://perception-pod.netlify.app/flower6.glb',
     (gltf) => {
       const model = gltf.scene;
 
-      // Automatically center and scale the model
+      model.traverse((child) => {
+        if (child.isMesh) {
+          // --- ENHANCEMENT: Enable shadow casting on the model ---
+          child.castShadow = true;
+          
+          if (child.material) {
+            // This fix is specific to models with transparency issues
+            child.material.transparent = true;
+            child.material.depthWrite = false;
+            child.material.side = THREE.DoubleSide;
+            child.material.needsUpdate = true;
+          }
+        }
+      });
+      
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
       
-      model.position.x += (model.position.x - center.x);
-      model.position.y += (model.position.y - center.y);
-      model.position.z += (model.position.z - center.z);
+      model.position.sub(center);
       
       const maxDim = Math.max(size.x, size.y, size.z);
-      const desiredSize = 5;
+      const desiredSize = 6; // Slightly larger for better presence
       const scale = desiredSize / maxDim;
       model.scale.set(scale, scale, scale);
       
-      // Update the controls to target the new model center
-      controls.target.copy(center.multiplyScalar(scale));
+      // --- ENHANCEMENT: Add a ground plane to receive shadows ---
+      // We do this here so we can place it relative to the loaded model's size
+      const groundGeometry = new THREE.CircleGeometry(8, 64); // A circular ground plane
+      // ShadowMaterial only receives shadows, making it 'invisible'
+      const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
+      
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.receiveShadow = true;
+      ground.rotation.x = -Math.PI / 2;
+      // Position the ground just below the model
+      ground.position.y = box.min.y * scale - 0.01;
+      
+      scene.add(ground);
+      
+      controls.target.set(0, 0, 0);
       controls.update();
 
       scene.add(model);
@@ -98,7 +137,7 @@ function setupModelViewer() {
   // 6. Render Loop
   function animate() {
     requestAnimationFrame(animate);
-    controls.update(); // Required for damping to take effect
+    controls.update(); // Important for damping and auto-rotate
     renderer.render(scene, camera);
   }
   animate();
@@ -111,8 +150,4 @@ function setupModelViewer() {
   });
 }
 
-// Run the setup function
-setupModelViewer();
-
-// Export for use in modules if needed
 export default setupModelViewer;
