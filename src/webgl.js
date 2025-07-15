@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js';
+
 
 function setupModelViewer() {
   const container = document.getElementById('model');
@@ -20,9 +21,6 @@ function setupModelViewer() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
-  // --- ENHANCEMENT: Enable shadow mapping for realistic shadows ---
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer, more realistic shadows
 
   container.appendChild(renderer.domElement);
 
@@ -34,45 +32,31 @@ function setupModelViewer() {
     0.1,
     1000
   );
-  camera.position.set(0, 5, 12); // Adjusted camera position for a better initial view
+  camera.position.set(0, 5, 12);
+
+  const hdrLoader = new UltraHDRLoader();
+hdrLoader.load('https://perception-pod.netlify.app/san_giuseppe_bridge_2k.jpg', (hdr) => {
+  hdr.mapping = THREE.EquirectangularReflectionMapping;
+  scene.background = hdr;
+  scene.environment = hdr;
+});
 
   // 3. Controls
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.autoRotate = true; // --- ENHANCEMENT: Add a subtle auto-rotation ---
+  controls.autoRotate = true;
   controls.autoRotateSpeed = 0.5;
 
-  // 4. Lighting and Environment
-  new UltraHDRLoader().load(
-    'https://perception-pod.netlify.app/enviornment.hdr',
-    (texture) => {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      scene.environment = texture;
-      // --- ENHANCEMENT: Make the environment visible as the background ---
-      scene.background = texture;
-      console.log('UltraHDR environment loaded.');
-    },
-    undefined,
-    (err) => console.error('Failed to load UltraHDR environment:', err)
-  );
-  
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 15); // Increased intensity slightly
-  directionalLight.position.set(0, 2, 2);
-  // --- ENHANCEMENT: Configure the light to cast shadows ---
-  // directionalLight.castShadow = true;
-  directionalLight.shadow.mapSize.width = 2048; // Higher resolution for sharper shadows
-  directionalLight.shadow.mapSize.height = 2048;
-  // --- ENHANCEMENT: Adjust the shadow camera frustum to fit the scene ---
-
-  
+  // 4. Lighting
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 15);
+  directionalLight.position.set(5, 10, 5);
   scene.add(directionalLight);
   
-  // Add an ambient light to soften shadows slightly
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  // Add ambient light
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
   scene.add(ambientLight);
 
-
-  // 5. Model Loading (without Draco)
+  // 5. Model Loading
   const gltfLoader = new GLTFLoader();
 
   gltfLoader.load(
@@ -82,14 +66,13 @@ function setupModelViewer() {
 
       model.traverse((child) => {
         if (child.isMesh) {
-          // --- ENHANCEMENT: Enable shadow casting on the model ---
-          child.castShadow = true;
-          
           if (child.material) {
-            // This fix is specific to models with transparency issues
-            child.material.transparent = true;
-            child.material.depthWrite = false;
-            child.material.side = THREE.DoubleSide;
+            // Handle transparency issues
+            if (child.material.transparent || child.material.opacity < 1) {
+              child.material.transparent = true;
+              child.material.depthWrite = false;
+              child.material.side = THREE.DoubleSide;
+            }
             child.material.needsUpdate = true;
           }
         }
@@ -102,23 +85,9 @@ function setupModelViewer() {
       model.position.sub(center);
       
       const maxDim = Math.max(size.x, size.y, size.z);
-      const desiredSize = 6; // Slightly larger for better presence
+      const desiredSize = 6;
       const scale = desiredSize / maxDim;
       model.scale.set(scale, scale, scale);
-      
-      // --- ENHANCEMENT: Add a ground plane to receive shadows ---
-      // We do this here so we can place it relative to the loaded model's size
-      const groundGeometry = new THREE.CircleGeometry(8, 64); // A circular ground plane
-      // ShadowMaterial only receives shadows, making it 'invisible'
-      const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
-      
-      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-      ground.receiveShadow = true;
-      ground.rotation.x = -Math.PI / 2;
-      // Position the ground just below the model
-      ground.position.y = box.min.y * scale - 0.01;
-      
-      scene.add(ground);
       
       controls.target.set(0, 0, 0);
       controls.update();
@@ -127,7 +96,9 @@ function setupModelViewer() {
       console.log('Model loaded and added to the scene.');
     },
     (xhr) => {
-      console.log(`Model loading: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+      if (xhr.total > 0) {
+        console.log(`Model loading: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+      }
     },
     (error) => {
       console.error('An error happened while loading the model:', error);
@@ -137,7 +108,7 @@ function setupModelViewer() {
   // 6. Render Loop
   function animate() {
     requestAnimationFrame(animate);
-    controls.update(); // Important for damping and auto-rotate
+    controls.update();
     renderer.render(scene, camera);
   }
   animate();
