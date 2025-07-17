@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Card Animation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card_wrap {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            width: 300px;
+            height: 400px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card_inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.7s;
+        }
+
+        .card_front, .card_back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .card_back {
+            z-index: 10;
+            transform: rotateY(180deg);
+            transform-style: preserve-3d;
+            will-change: transform;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card_front {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .card-subject {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .card-subject h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .card-subject p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .card-highlight {
+            z-index: 2 !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            mix-blend-mode: screen;
+            opacity: 0;
+            pointer-events: none;
+            --space: 5%;
+            --angle: 133deg;
+            --imgsize: 500px;
+            --hyp: 0.5;
+            --o: 1;
+        }
+
+        .card-highlight::before {
+            content: '';
+            opacity: 0.1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            mix-blend-mode: color-dodge;
+            background-image: url(https://res.cloudinary.com/simey/image/upload/Dev/PokemonCards/illusion.webp), 
+                repeating-linear-gradient(
+                    0deg,
+                    rgb(255, 119, 115) calc(var(--space)*1),
+                    rgba(255,237,95,1) calc(var(--space)*2),
+                    rgba(168,255,95,1) calc(var(--space)*3),
+                    rgba(131,255,247,1) calc(var(--space)*4),
+                    rgba(120,148,255,1) calc(var(--space)*5),
+                    rgb(216, 117, 255) calc(var(--space)*6),
+                    rgb(255, 119, 115) calc(var(--space)*7)
+                ),
+                repeating-linear-gradient(
+                    var(--angle),
+                    #0e152e 0%,
+                    hsl(180, 10%, 60%) 3.8%,
+                    hsl(180, 29%, 66%) 4.5%,
+                    hsl(180, 10%, 60%) 5.2%,
+                    #0e152e 10%,
+                    #0e152e 12%
+                ),
+                radial-gradient(
+                    farthest-corner circle at var(--mx) var(--my),
+                    rgba(0, 0, 0, .1) 12%,
+                    rgba(0, 0, 0, .15) 20%,
+                    rgba(0, 0, 0, .25) 120%
+                );
+            background-blend-mode: exclusion, hue, hard-light, exclusion;
+            background-size: var(--imgsize), 200% 700%, 300%, 200%;
+            background-position: center, 0% var(--gy), var(--gx) var(--gy), var(--gx) var(--gy);
+            filter: brightness(calc((var(--hyp)*0.3) + 0.5)) contrast(2) saturate(1.5);
+            -webkit-filter: brightness(calc((var(--hyp)*0.3) + 0.5)) contrast(2) saturate(1.5);
+            display: grid;
+            grid-area: 1/1;
+            opacity: var(--o);
+        }
+
+        .back-content {
+            padding: 30px;
+            color: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .back-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .back-content p {
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card_wrap">
+            <div class="card_inner">
+                <div class="card_front">
+                    <div class="card-highlight"></div>
+                    <div class="card-subject">
+                        <h3>Magic Card</h3>
+                        <p>Hover to see the holographic effect</p>
+                    </div>
+                </div>
+                <div class="card_back">
+                    <div class="back-content">
+                        <h3>Back Side</h3>
+                        <p>This is the back of the card. Click to flip back to the front.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card_wrap">
+            <div class="card_inner">
+                <div class="card_front">
+                    <div class="card-highlight"></div>
+                    <div class="card-subject">
+                        <h3>Another Card</h3>
+                        <p>Each card has its own interactive effects</p>
+                    </div>
+                </div>
+                <div class="card_back">
+                    <div class="back-content">
+                        <h3>Card Info</h3>
+                        <p>More details about this card can be found here on the back side.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card_wrap">
+            <div class="card_inner">
+                <div class="card_front">
+                    <div class="card-highlight"></div>
+                    <div class="card-subject">
+                        <h3>Third Card</h3>
+                        <p>Click to flip and explore both sides</p>
+                    </div>
+                </div>
+                <div class="card_back">
+                    <div class="back-content">
+                        <h3>Hidden Content</h3>
+                        <p>The back side reveals additional information and details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        Hover over cards for 3D effects and holographic highlights • Click to flip cards
+    </div>
+
+    <script>
+        // --- 4. CARDS (OPTIMIZED) ---
+        const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
+        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        const cards = document.querySelectorAll(".card_wrap");
+
+        cards.forEach((card) => {
+            const cardInner = card.querySelector(".card_inner");
+            const highlight = card.querySelector(".card-highlight");
+            const cardSubject = card.querySelector(".card-subject");
+            let isFlipped = false;
+            let animationId = null;
+            let lastTime = 0;
+            const throttleDelay = 16; // ~60fps
+
+            gsap.set(card, { transformPerspective: 1000 });
+
+            card.addEventListener("click", () => {
+                // Cancel any pending animation frame
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                
+                isFlipped = !isFlipped;
+                gsap.to(cardInner, {
+                    rotationY: isFlipped ? 180 : 0,
+                    duration: 0.7,
+                    ease: "power3.inOut",
+                    onStart: () => {
+                        if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
+                        // Reset card parallax rotation only (keep scale)
+                        if (!isTouchDevice) {
+                            gsap.to(card, {
+                                rotationX: 0,
+                                rotationY: 0,
+                                duration: 0.7,
+                                ease: "power3.inOut"
+                            });
+                        }
+                        // Reset highlight position to center
+                        if (highlight) {
+                            gsap.set(highlight, {
+                                "--mx": "50%",
+                                "--my": "50%",
+                                "--gx": "50%",
+                                "--gy": "50%"
+                            });
+                        }
+                    },
+                    onComplete: () => {
+                        if (isDesktop && !isFlipped && highlight) {
+                            if (card.matches(":hover")) {
+                                gsap.to(highlight, { opacity: 1, duration: 0.2 });
+                            }
+                        }
+                    }
+                });
+            });
+
+            if (isDesktop) {
+                let leaveTween = null;
+                
+                card.addEventListener("mouseenter", () => {
+                    if (leaveTween) leaveTween.kill();
+                    if (highlight && !isFlipped) {
+                        gsap.to(highlight, { opacity: 1, duration: 0.2 });
+                    }
+                });
+                
+                card.addEventListener("mouseleave", () => {
+                    // Cancel any pending animation frame
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        animationId = null;
+                    }
+                    
+                    leaveTween = gsap.to(card, {
+                        rotationX: 0,
+                        rotationY: 0,
+                        scale: 1,
+                        duration: 1,
+                        ease: "elastic.out(1, 0.75)"
+                    });
+                    
+                    // Reset card_subject position and rotation
+                    if (cardSubject) {
+                        gsap.to(cardSubject, {
+                            x: 0,
+                            y: 0,
+                            rotationX: 0,
+                            rotationY: 0,
+                            duration: 1,
+                            ease: "elastic.out(1, 0.75)"
+                        });
+                    }
+                    
+                    if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
+                });
+                
+                card.addEventListener("mousemove", (e) => {
+                    if (gsap.isTweening(cardInner) || isTouchDevice) return;
+                    
+                    const now = performance.now();
+                    if (now - lastTime < throttleDelay) return;
+                    lastTime = now;
+                    
+                    // Cancel previous animation frame if it exists
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                    
+                    animationId = requestAnimationFrame(() => {
+                        const rect = card.getBoundingClientRect();
+                        const mouseX = e.clientX - rect.left;
+                        const mouseY = e.clientY - rect.top;
+                        
+                        // Calculate movement multipliers for depth effect
+                        const moveX = ((mouseX - rect.width / 2) / rect.width) * 20;
+                        const moveY = ((mouseY - rect.height / 2) / rect.height) * 20;
+                        
+                        // Always apply scale, but only apply rotation if not flipped
+                        if (!isFlipped) {
+                            const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
+                            const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
+                            
+                            gsap.to(card, {
+                                rotationX: targetRotateX,
+                                rotationY: targetRotateY,
+                                scale: 1.05,
+                                duration: 0.6,
+                                ease: "power2.out"
+                            });
+                        } else {
+                            // When flipped, only apply scale
+                            gsap.to(card, {
+                                scale: 1.05,
+                                duration: 0.6,
+                                ease: "power2.out"
+                            });
+                        }
+                        
+                        // Animate card_subject for 3D depth effect (works on both sides)
+                        if (cardSubject) {
+                            gsap.to(cardSubject, {
+                                x: moveX,
+                                y: moveY,
+                                rotationX: -moveY * 0.5,
+                                rotationY: moveX * 0.5,
+                                duration: 0.6,
+                                ease: "power2.out"
+                            });
+                        }
+
+                        if (highlight) {
+                            // Use GSAP's set method for better performance
+                            gsap.set(highlight, {
+                                "--mx": `${mouseX}px`,
+                                "--my": `${mouseY}px`,
+                                "--gx": `${(mouseX / rect.width) * 100}%`,
+                                "--gy": `${(mouseY / rect.height) * 100}%`
+                            });
+                        }
+                        
+                        animationId = null;
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

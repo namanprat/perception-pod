@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import * as POSTPROCESSING from "postprocessing"
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { UltraHDRLoader } from 'three/examples/jsm/loaders/UltraHDRLoader.js';
 
@@ -117,15 +116,21 @@ function setupModelViewer() {
   hemisphereLight.position.set(0, 20, 0);
   scene.add(hemisphereLight);
 
-  // 7. Model Loading
-  const gltfLoader = new GLTFLoader();
+  // 7. JSON Scene Loading
+  const objectLoader = new THREE.ObjectLoader();
+  let mixer; // For animations if present
 
-  gltfLoader.load(
-    'https://perception-pod.netlify.app/flower6.glb',
-    (gltf) => {
-      const model = gltf.scene;
-
-      model.traverse((child) => {
+  async function loadJSONScene() {
+    try {
+      // Replace 'path/to/your/scene.json' with your actual JSON file path
+      const response = await fetch('https://perception-pod.netlify.app/project.json');
+      const jsonData = await response.json();
+      
+      // Parse the JSON data
+      const loadedObject = objectLoader.parse(jsonData);
+      
+      // Process all meshes in the loaded object
+      loadedObject.traverse((child) => {
         if (child.isMesh) {
           // Disable shadow casting and receiving
           child.castShadow = false;
@@ -158,31 +163,55 @@ function setupModelViewer() {
         }
       });
       
-      const box = new THREE.Box3().setFromObject(model);
+      // Handle animations if present
+      if (loadedObject.animations && loadedObject.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(loadedObject);
+        loadedObject.animations.forEach(clip => {
+          mixer.clipAction(clip).play();
+        });
+      }
+      
+      // Calculate bounding box and center the object
+      const box = new THREE.Box3().setFromObject(loadedObject);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
       
-      model.position.sub(center);
+      loadedObject.position.sub(center);
       
+      // Scale the object to fit desired size
       const maxDim = Math.max(size.x, size.y, size.z);
       const desiredSize = 6;
       const scale = desiredSize / maxDim;
-      model.scale.set(scale, scale, scale);
+      loadedObject.scale.set(scale, scale, scale);
       
+      // Update controls target
       controls.target.set(0, 0, 0);
       controls.update();
 
-      scene.add(model);
-    },
-    undefined,
-    (error) => {
-      console.error('Model loading error:', error);
+      // Add the loaded object to the scene
+      scene.add(loadedObject);
+      
+    } catch (error) {
+      console.error('JSON scene loading error:', error);
     }
-  );
+  }
+
+  // Load the JSON scene
+  loadJSONScene();
 
   // 8. Render Loop
+  const clock = new THREE.Clock();
+  
   function animate() {
     requestAnimationFrame(animate);
+    
+    const deltaTime = clock.getDelta();
+    
+    // Update animation mixer if present
+    if (mixer) {
+      mixer.update(deltaTime);
+    }
+    
     controls.update();
     composer.render(); // Use composer instead of renderer
   }
