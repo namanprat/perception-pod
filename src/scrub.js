@@ -2,7 +2,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 function scrub()
 {
-
+gsap.registerPlugin(ScrollTrigger);
+        
+        // Generate image URLs array
         const imageUrls = [];
         for (let i = 1; i <= 100; i++) {
             imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
@@ -88,12 +90,12 @@ function scrub()
             const currentFrame = Math.floor(imageSequence.frame);
             const img = imageSequence.images[currentFrame];
             
-            if (img && img.complete) {
+            if (img && img.complete && ctx) {
                 // Clear canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Calculate scaling to fit image in canvas while maintaining aspect ratio
-                const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+                // Calculate scaling to cover entire frame height (like CSS object-fit: cover)
+                const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
                 const scaledWidth = img.width * scale;
                 const scaledHeight = img.height * scale;
                 
@@ -103,6 +105,23 @@ function scrub()
                 
                 // Draw image
                 ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                
+                // Create fade to transparent gradient for bottom 10vh
+                const fadeHeight = canvas.height * 0.1; // 10vh
+                const fadeStartY = canvas.height - fadeHeight;
+                
+                // Create gradient from transparent to opaque black
+                const gradient = ctx.createLinearGradient(0, fadeStartY, 0, canvas.height);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent at top of fade
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 1)'); // Opaque black at bottom
+                
+                // Apply gradient as mask using composite operation
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, fadeStartY, canvas.width, fadeHeight);
+                
+                // Reset composite operation
+                ctx.globalCompositeOperation = 'source-over';
             }
         }
         
