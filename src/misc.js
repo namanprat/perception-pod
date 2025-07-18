@@ -99,6 +99,17 @@ function misc()
               stagger: 0.02,
               ease: "power4.inOut",
           }, "<");
+          // Fade .hero_main_wrap on scroll (first 35vh)
+gsap.to(".hero_main_wrap", {
+  scrollTrigger: {
+    trigger: ".hero_main_wrap",
+    start: "top top",
+    end: "35vh top",
+    scrub: true
+  },
+  autoAlpha: 0,
+  ease: "none"
+});
       
         // --- 2. ABOUT REVEAL ---
         const contentText = document.querySelector(".content_text");
