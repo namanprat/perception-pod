@@ -102,9 +102,10 @@ function misc()
           // Fade .hero_main_wrap on scroll (first 35vh)
 gsap.to(".hero_main_wrap", {
   scrollTrigger: {
+    markers: true,
     trigger: ".hero_main_wrap",
     start: "top top",
-    end: "35vh top",
+    end: "130vh top",
     scrub: true
   },
   autoAlpha: 0,
