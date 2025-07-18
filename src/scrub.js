@@ -27,7 +27,7 @@ function scrub() {
       },
 
       // Use provided FPS or fallback to 24
-      fps: parseInt(component.getAttribute('image-scrubbing-fps')) || 25,
+      fps: parseInt(component.getAttribute('image-scrubbing-fps')) || 2,
 
       // ScrollTrigger configuration with fallbacks
       scrollTrigger: {
