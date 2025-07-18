@@ -1,80 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Sequence Scrubbing</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-        }
-        
-        .scrub_wrap {
-            height: 500vh;
-            background: #000;
-        }
-        
-        .scrub_contain {
-            position: sticky;
-            top: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-        }
-        
-        #pp-scrub {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        .content {
-            position: relative;
-            z-index: 10;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-            text-align: center;
-            background: rgba(0,0,0,0.7);
-        }
-        
-        .spacer {
-            height: 100vh;
-        }
-    </style>
-</head>
-<body>
-    <div class="scrub_wrap">
-        <div class="scrub_contain">
-        </div>
-    </div>
-    
-    <div class="content">
-        <div>
-            <h1>Scroll to see the image sequence</h1>
-            <p>The images will scrub based on your scroll position</p>
-        </div>
-    </div>
-    
-    <div class="spacer"></div>
-    <div class="spacer"></div>
-    <div class="spacer"></div>
-    <div class="spacer"></div>
+gsap.registerPlugin(ScrollTrigger);
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    
-    <script>
-        // Register ScrollTrigger plugin
-        gsap.registerPlugin(ScrollTrigger);
-        
-        // Generate image URLs array
+function scrub()
+{
+
         const imageUrls = [];
         for (let i = 1; i <= 100; i++) {
             imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
@@ -208,6 +136,5 @@
             resizeCanvas();
             drawFrame();
         });
-    </script>
-</body>
-</html>
+}
+export default scrub

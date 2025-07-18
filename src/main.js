@@ -1,7 +1,9 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
-import brev from './webgl';
+// import brev from './webgl';
+import scrub from './scrub';
+
 import 'lenis/dist/lenis.css'
 import menu from './menuReveal'
 import Gradient from './gradient';
@@ -18,7 +20,9 @@ gsap.ticker.lagSmoothing(0);
 
 
 
-brev()
+// brev()
+console.log(scrub)
+scrub()
 misc()
 menu()
 
