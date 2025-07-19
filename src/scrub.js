@@ -1,171 +1,159 @@
-function scrub() {
-  var Webflow = Webflow || []
+gsap.registerPlugin(ScrollTrigger);
 
-  // Wait for Webflow to be ready before running the script
-  Webflow.push(function () {
-
-    // Get the main wrapper element that holds all configuration attributes
-    const component = document.querySelector('[image-scrubbing = component]')
-
-    // Extract the image URLs from a semicolon-separated attribute
-    const imageURLs = document.querySelector('[image-scrubbing-urls]')
-      .getAttribute('image-scrubbing-urls')
-      .split(';')
-      .filter(url => url.trim()) // Remove empty strings
-
-    // Initialize the image scrubbing animation
-    imageSequence({
-      imageURLs,
-      canvas: '[image-scrubbing = component] canvas',
-      // clear: true, // enable only if your images have transparency
-
-      // Optional responsive object-fit values
-      fitMode: {
-        base: component.getAttribute('image-scrubbing-fit'),
-        landscape: component.getAttribute('image-scrubbing-fit-landscape'),
-        portrait: component.getAttribute('image-scrubbing-fit-portrait'),
-      },
-
-      // Use provided FPS or fallback to 24
-      fps: parseInt(component.getAttribute('image-scrubbing-fps')) || 24,
-
-      // ScrollTrigger configuration with fallbacks
-      scrollTrigger: {
-        trigger: component,
-        start: component.getAttribute('image-scrubbing-start-point') || 'top top',
-        end: component.getAttribute('image-scrubbing-end-point') || 'bottom bottom',
-        scrub: true
-      }
-    })
-
-    /**
-     * Draws an image sequence onto a <canvas> synced with scroll position.
-     */
-    function imageSequence(config) {
-
-      let playhead = { frame: 0 }
-      let canvas = gsap.utils.toArray(config.canvas)[0] || console.warn('canvas not defined')
-      let ctx = canvas.getContext('2d')
-      let curFrame = -1
-      let onUpdate = config.onUpdate
-      let images
-
-      // Resize the canvas according to device pixel ratio
-      const resizeCanvas = () => {
-        const dpr = window.devicePixelRatio || 1
-        canvas.width = canvas.clientWidth * dpr
-        canvas.height = canvas.clientHeight * dpr
-        ctx.setTransform(1, 0, 0, 1, 0, 0)
-        ctx.scale(dpr, dpr)
-      }
-
-      // Draw the current image frame based on scroll position
-      const updateImage = function () {
-        let frame = Math.round(playhead.frame)
-
-        // Redraw if the frame changed or the canvas was resized
-        if (frame !== curFrame || !canvas._hasHighResSetup) {
-          if (!canvas._hasHighResSetup) {
-            resizeCanvas()
-            canvas._hasHighResSetup = true
-          }
-
-          // Clear the canvas if 'clear' is enabled
-          config.clear && ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
-
-          const img = images[frame]
-          const canvasWidth = canvas.clientWidth
-          const canvasHeight = canvas.clientHeight
-          const canvasRatio = canvasWidth / canvasHeight
-          const imgRatio = img.naturalWidth / img.naturalHeight
-
-          let drawWidth, drawHeight
-
-          // Determine the appropriate fit mode based on current orientation
-          function getResponsiveFit() {
-            const isPortrait = window.matchMedia('(orientation: portrait)').matches
-            const isLandscape = window.matchMedia('(orientation: landscape)').matches
-
-            if (isPortrait && config.fitMode.portrait) return config.fitMode.portrait
-            if (isLandscape && config.fitMode.landscape) return config.fitMode.landscape
-
-            return config.fitMode.base || 'contain'
-          }
-
-          const fitMode = getResponsiveFit()
-
-          // Calculate image size according to 'contain' or 'cover'
-          if (fitMode === 'contain') {
-            if (imgRatio > canvasRatio) {
-              drawWidth = canvasWidth
-              drawHeight = canvasWidth / imgRatio
-            } else {
-              drawHeight = canvasHeight
-              drawWidth = canvasHeight * imgRatio
-            }
-          } else if (fitMode === 'cover') {
-            if (imgRatio > canvasRatio) {
-              drawHeight = canvasHeight
-              drawWidth = canvasHeight * imgRatio
-            } else {
-              drawWidth = canvasWidth
-              drawHeight = canvasWidth / imgRatio
-            }
-          }
-
-          // Center the image within the canvas
-          const offsetX = (canvasWidth - drawWidth) / 2
-          const offsetY = (canvasHeight - drawHeight) / 2
-
-          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
-
-          curFrame = frame
-          onUpdate && onUpdate.call(this, frame, img)
+function scrub()
+{
+gsap.registerPlugin(ScrollTrigger);
+        
+        // Generate image URLs array
+        const imageUrls = [];
+        for (let i = 1; i <= 100; i++) {
+            imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
         }
-      }
-
-      // Preload all images and trigger initial render when the first is ready
-      images = config.imageURLs.map((url, i) => {
-        let img = new Image()
-        img.src = url
-        i || (img.onload = updateImage)
-        return img
-      })
-
-      // Redraw when canvas dimensions change
-      new ResizeObserver(() => {
-        canvas._hasHighResSetup = false
-        updateImage()
-      }).observe(canvas)
-
-      // Create a timeline for the animation with extended last frame
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: config.scrollTrigger.trigger,
-          start: config.scrollTrigger.start,
-          end: config.scrollTrigger.end,
-          scrub: true
+        
+        // Canvas setup with error handling
+        let canvas = document.getElementById('pp-scrub');
+        
+        // If canvas doesn't exist, create it dynamically
+        if (!canvas) {
+            canvas = document.createElement('canvas');
+            canvas.id = 'pp-scrub';
+            const container = document.querySelector('.scrub_contain');
+            if (container) {
+                container.appendChild(canvas);
+            }
         }
-      })
-
-      // Animation for the main sequence (80% of the scroll)
-      tl.to(playhead, {
-        frame: images.length - 1,
-        ease: 'none',
-        onUpdate: updateImage,
-        duration: 0.8 // 80% of the timeline
-      })
-
-      // Hold the last frame for the remaining 20% (50vh out of 250vh total)
-      tl.to(playhead, {
-        frame: images.length - 1,
-        ease: 'none',
-        duration: 0.2 // 20% of the timeline
-      })
-
-      return tl
-    }
-  })
+        
+        // Try to get context with fallback
+        let ctx;
+        try {
+            ctx = canvas.getContext('2d');
+        } catch (error) {
+            console.error('Canvas context error:', error);
+            // Fallback: create new canvas element
+            canvas = document.createElement('canvas');
+            canvas.id = 'pp-scrub';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.display = 'block';
+            
+            const container = document.querySelector('.scrub_contain');
+            if (container) {
+                container.innerHTML = '';
+                container.appendChild(canvas);
+            }
+            
+            ctx = canvas.getContext('2d');
+        }
+        
+        // Set canvas size with safety check
+        function resizeCanvas() {
+            if (canvas && ctx) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        }
+        
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', resizeCanvas);
+        } else {
+            resizeCanvas();
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Image sequence object
+        const imageSequence = {
+            frame: 0,
+            images: [],
+            imagesLoaded: 0,
+            totalImages: imageUrls.length
+        };
+        
+        // Preload images
+        function preloadImages() {
+            imageUrls.forEach((url, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    imageSequence.imagesLoaded++;
+                    if (imageSequence.imagesLoaded === imageSequence.totalImages) {
+                        initScrollTrigger();
+                    }
+                };
+                img.src = url;
+                imageSequence.images[index] = img;
+            });
+        }
+        
+        // Draw current frame
+        function drawFrame() {
+            const currentFrame = Math.floor(imageSequence.frame);
+            const img = imageSequence.images[currentFrame];
+            
+            if (img && img.complete && ctx) {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate scaling to cover entire frame height (like CSS object-fit: cover)
+                const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                const scaledWidth = img.width * scale;
+                const scaledHeight = img.height * scale;
+                
+                // Center the image
+                const x = (canvas.width - scaledWidth) / 2;
+                const y = (canvas.height - scaledHeight) / 2;
+                
+                // Draw image
+                ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                
+                // Create fade to transparent gradient for bottom 10vh
+                const fadeHeight = canvas.height * 0.1; // 10vh
+                const fadeStartY = canvas.height - fadeHeight;
+                
+                // Create gradient from transparent to opaque black
+                const gradient = ctx.createLinearGradient(0, fadeStartY, 0, canvas.height);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent at top of fade
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 1)'); // Opaque black at bottom
+                
+                // Apply gradient as mask using composite operation
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, fadeStartY, canvas.width, fadeHeight);
+                
+                // Reset composite operation
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        }
+        
+        // Initialize ScrollTrigger
+        function initScrollTrigger() {
+            // Draw initial frame
+            drawFrame();
+            
+            // Create ScrollTrigger animation
+            gsap.to(imageSequence, {
+                frame: imageSequence.totalImages - 1,
+                snap: "frame",
+                ease: "none",
+                scrollTrigger: {
+                    trigger: ".scrub_wrap",
+                    start: "top top",
+                    end: "bottom bottom",
+                    scrub: 0.5,
+                    onUpdate: () => drawFrame()
+                }
+            });
+            
+            console.log('Image sequence initialized with', imageSequence.totalImages, 'images');
+        }
+        
+        // Start loading images
+        preloadImages();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            drawFrame();
+        });
 }
-
 export default scrub
