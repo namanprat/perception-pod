@@ -38,28 +38,7 @@ function misc()
     });
 
       
-        const preloaderTl = gsap.timeline();
-        preloaderTl
-          .to(".preloader-wordmark", { opacity: 1, yPercent: 0, duration: 0.2 })
-          .from(".preloader-wordmark .path", {
-            delay: 0.2,
-            opacity: 0,
-            yPercent: 100,
-            duration: 0.8,
-            ease: "power3.out",
-            stagger: {
-              amount: 0.25
-            }
-          }).to(".preloader-wordmark .path", {
-            delay: 0,
-            yPercent: -100,
-            opacity: 0,
-            duration: 0.8,
-            ease: "power3.in",
-            stagger: {
-              amount: 0.12
-            }
-          })
+        
       
       
         // HERO REVEAL      

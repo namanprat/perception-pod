@@ -1,6 +1,22 @@
 gsap.registerPlugin(ScrollTrigger);
 
 function scrub() {
+
+  const preloaderTl = gsap.timeline();
+        preloaderTl
+          .to(".preloader-wordmark", { opacity: 1, yPercent: 0, duration: 0.2 })
+          .from(".preloader-wordmark .path", {
+            delay: 0.2,
+            opacity: 0,
+            yPercent: 100,
+            duration: 0.8,
+            ease: "power3.out",
+            stagger: {
+              amount: 0.25
+            }
+          })
+          // Remove the exit animation from here - it will be triggered after loading
+          
     const start = performance.now();
     
     // Generate image URLs array
@@ -32,7 +48,7 @@ function scrub() {
             
             // Animate progress bar
             gsap.to(".progress-bar", {
-                delay: 1,
+                delay: 0.5,
                 scaleX: progress,
                 ease: "power3.out",
             });
@@ -48,15 +64,29 @@ function scrub() {
             const duration = end - start;
             const remainingTime = Math.max(MIN_TIME - duration, 0);
             
-            gsap.to(".preloader_wrap", {
-                delay: (remainingTime / 1000) + 1,
+            // Play the exit animation for .path elements after loading is complete
+            gsap.to(".preloader-wordmark .path", {
+                delay: (remainingTime / 1000),
                 yPercent: -100,
-                duration: 0.9,
-                ease: "power3.out",
-                onComplete: () => {
-                    // re-enable scrolling
-                    gsap.set("body", { overflow: "auto" });
+                opacity: 0,
+                duration: 0.8,
+                ease: "power3.in",
+                stagger: {
+                    amount: 0.12
                 },
+                onComplete: () => {
+                    // Hide the entire preloader after path animation completes
+                    gsap.to(".preloader_wrap", {
+                        delay: 0.3,
+                        yPercent: -100,
+                        duration: 0.8,
+                        ease: "power3.out",
+                        onComplete: () => {
+                            // re-enable scrolling
+                            gsap.set("body", { overflow: "auto" });
+                        },
+                    });
+                }
             });
             
             // Initialize ScrollTrigger after loading is complete
