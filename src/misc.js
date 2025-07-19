@@ -26,6 +26,8 @@ function onImagesLoaded() {
   gsap.to(".preloader_wrap", {
     delay: remainingTime / 1000,
     yPercent: -100,
+    duration: 0.8,
+    ease: "power3.out",
     onComplete: () => {
       // re-enable scrolling
       gsap.set("body", { overflow: "auto" });
@@ -93,13 +95,6 @@ function onImagesLoaded() {
             }
           })
       
-          .to(
-            ".preloader_wrap", {
-              yPercent: -100,
-              duration: 0.8,
-              ease: "power3.out"
-            },
-          );
       
         // HERO REVEAL      
         let headerSplit = new SplitText("#header-split", {
