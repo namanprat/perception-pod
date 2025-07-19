@@ -1,7 +1,7 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
-import scrub from './scrub';
+// import scrub from './scrub';
 
 import 'lenis/dist/lenis.css'
 import menu from './menuReveal'
@@ -20,7 +20,7 @@ gsap.ticker.lagSmoothing(0);
 
 
 // brev()
-scrub()
+// scrub()
 misc()
 menu()
 
