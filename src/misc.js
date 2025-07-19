@@ -12,7 +12,9 @@ imgLoad.on("progress", function (instance, image) {
   const progress = instance.progressedCount / numImages;
   // gsap loader animation shows progress of images loading
   gsap.to(".progress-bar", {
+    delay: 1,
     scaleX: progress,
+    ease: "power3.out",
   });
 });
 function onImagesLoaded() {
@@ -25,9 +27,9 @@ function onImagesLoaded() {
   const duration = end - start;
   const remainingTime = Math.max(MIN_TIME - duration, 0);
   gsap.to(".preloader_wrap", {
-    delay: remainingTime / 1000,
+    delay: (remainingTime / 1000) + 1,
     yPercent: -100,
-    duration: 0.8,
+    duration: 0.9,
     ease: "power3.out",
     onComplete: () => {
       // re-enable scrolling
