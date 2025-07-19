@@ -106,7 +106,7 @@ gsap.to(".hero_main_wrap", {
     trigger: ".hero_main_wrap",
     start: "top top",
     end: "130vh top",
-    scrub: true
+    // scrub: true
   },
   autoAlpha: 0,
   ease: "none"
