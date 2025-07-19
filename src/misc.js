@@ -1,5 +1,8 @@
 gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, Flip);
 
+// Global variable to store the split text instance
+let headerSplitText = null;
+
 // Global function to handle hero reveal animations
 function playHeroReveal() {
     // Hero reveal timeline
@@ -16,33 +19,31 @@ function playHeroReveal() {
         }
     });
     
-    // Animate hero nav items
-    heroRevealTl.from(".hero-nav-item", {
-        opacity: 0,
-        yPercent: 100,
+    // Animate hero nav items from y:-100 with stagger
+    heroRevealTl.to(".hero-nav-item", {
+      delay: -0.5,
+        y: 0,
+        opacity: 1,
         duration: 0.8,
         ease: "power3.out",
         stagger: 0.1
     }, "-=0.8");
     
-    // Split text animation for header-split
-    const headerSplit = document.querySelector(".header-split");
-    if (headerSplit) {
-        let splitText = new SplitText(".header-split", {
-            type: "words, chars",
-            linesClass: "split-line"
+    // Animate the pre-split header text
+    if (headerSplitText && headerSplitText.lines) {
+        // Animate each line's words together
+        headerSplitText.lines.forEach((line, index) => {
+            const wordsInLine = headerSplitText.words.filter(word => line.contains(word));
+            
+            heroRevealTl.to(wordsInLine, {
+                y: 0,
+                duration: 0.8,
+                ease: "power3.out",
+                stagger: 0.05 // Small stagger within each line
+            }, index * 0.1); // Stagger between lines
         });
-        
-        heroRevealTl.from(splitText.chars, {
-            opacity: 0,
-            yPercent: 100,
-            duration: 0.8,
-            ease: "power3.out",
-            stagger: 0.02
-        }, "-=0.6");
     }
     
-    console.log("Hero reveal animations complete");
 }
 
 function scrub() {
@@ -87,7 +88,7 @@ function scrub() {
             const progress = loadedCount / imageSequence.totalImages;
             imageSequence.loadingProgress = progress;
             
-            console.log(`image ${loadedCount} out of ${imageSequence.totalImages} loaded (${Math.round(progress * 100)}%)`);
+            // console.log(`image ${loadedCount} out of ${imageSequence.totalImages} loaded (${Math.round(progress * 100)}%)`);
             
             // Animate progress bar
             gsap.to(".progress-bar", {
@@ -100,7 +101,7 @@ function scrub() {
         // Handle completion
         function onAllImagesLoaded() {
             const end = performance.now();
-            console.log(`Time taken to load ${imageSequence.totalImages} images: ${Math.round(end - start)}ms`);
+            // console.log(`Time taken to load ${imageSequence.totalImages} images: ${Math.round(end - start)}ms`);
             
             // Calculate remaining time to ensure loader is displayed for a minimum time
             const MIN_TIME = 1000;
@@ -288,7 +289,6 @@ function scrub() {
             }
         });
         
-        console.log('Image sequence initialized with', imageSequence.totalImages, 'images');
     }
     
     // Start loading images with progress tracking
@@ -306,17 +306,32 @@ function misc() {
         // Set initial states - hero elements hidden until preloader completes
         gsap.set("#nav", { yPercent: -100 });
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
-        gsap.set(".hero-nav-item", { opacity: 0, yPercent: 100 });
+        gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
         
-        // Set initial state for header-split
-        const headerSplit = document.querySelector(".header-split");
+        // Initialize SplitText for header-split immediately when page loads
+        const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
-            gsap.set(".header-split", { opacity: 1 }); // Ensure parent is visible
+            // Create SplitText with lines and words
+            headerSplitText = new SplitText("#header-split", {
+                type: "lines, words",
+                linesClass: "split-line"
+            });
+            
+            // Set initial state for the line wrappers
+            gsap.set(".split-line", { 
+                overflow: "hidden" 
+            });
+            
+            // Set initial state for words - hidden and positioned below
+            gsap.set(headerSplitText.words, { 
+                y: "100%" 
+            });
+            
         }
 
         // Magnetic elements interaction
         const magneticElements = document.querySelectorAll('.is-magnetic');
-        const strength = 30;
+        const strength = 5;
 
         magneticElements.forEach(elem => {
             elem.addEventListener('mousemove', (e) => {
