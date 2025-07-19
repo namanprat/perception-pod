@@ -9,7 +9,7 @@ function misc()
 
          const magneticElements = document.querySelectorAll('.is-magnetic');
 
-    const strength = 50;
+    const strength = 30;
 
     magneticElements.forEach(elem => {
         elem.addEventListener('mousemove', (e) => {
