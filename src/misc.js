@@ -2,27 +2,46 @@ gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, Flip);
 
 // Global function to handle hero reveal animations
 function playHeroReveal() {
-    // Animate navigation into view
-    gsap.to("#nav", { 
-        yPercent: 0, 
-        duration: 0.8, 
-        ease: "power3.out",
-        delay: 0.2 
-    });
+    // Hero reveal timeline
+    const heroRevealTl = gsap.timeline();
     
-    // Animate hero wordmark paths
-    gsap.to(".hero-wordmark .hero-path", {
+    // Animate hero wordmark paths (only in hero section)
+    heroRevealTl.to(".hero-wordmark .hero-path", {
         yPercent: 0,
         opacity: 1,
         duration: 1.2,
         ease: "power3.out",
         stagger: {
             amount: 0.3
-        },
-        delay: 0.4
+        }
     });
     
-    // Additional hero animations can be added here
+    // Animate hero nav items
+    heroRevealTl.from(".hero-nav-item", {
+        opacity: 0,
+        yPercent: 100,
+        duration: 0.8,
+        ease: "power3.out",
+        stagger: 0.1
+    }, "-=0.8");
+    
+    // Split text animation for header-split
+    const headerSplit = document.querySelector(".header-split");
+    if (headerSplit) {
+        let splitText = new SplitText(".header-split", {
+            type: "words, chars",
+            linesClass: "split-line"
+        });
+        
+        heroRevealTl.from(splitText.chars, {
+            opacity: 0,
+            yPercent: 100,
+            duration: 0.8,
+            ease: "power3.out",
+            stagger: 0.02
+        }, "-=0.6");
+    }
+    
     console.log("Hero reveal animations complete");
 }
 
@@ -287,6 +306,13 @@ function misc() {
         // Set initial states - hero elements hidden until preloader completes
         gsap.set("#nav", { yPercent: -100 });
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
+        gsap.set(".hero-nav-item", { opacity: 0, yPercent: 100 });
+        
+        // Set initial state for header-split
+        const headerSplit = document.querySelector(".header-split");
+        if (headerSplit) {
+            gsap.set(".header-split", { opacity: 1 }); // Ensure parent is visible
+        }
 
         // Magnetic elements interaction
         const magneticElements = document.querySelectorAll('.is-magnetic');
@@ -556,7 +582,7 @@ function misc() {
             }
         });
 
-        // Navigation show/hide based on scroll (separate from hero reveal)
+        // Navigation show/hide based on scroll (original functionality)
         const showNavTimeline = gsap.timeline({ paused: true });
         showNavTimeline
             .to("#nav", { yPercent: 0, duration: 0.5, ease: "power2.out" })
@@ -591,6 +617,7 @@ function misc() {
                 "-=0.2"
             );
 
+        // Navigation ScrollTrigger - separate from hero reveal
         ScrollTrigger.create({
             trigger: ".hero_contain",
             start: "bottom top",
