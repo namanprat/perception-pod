@@ -1,7 +1,6 @@
 import './styles.css'
 import Lenis from 'lenis'
 import misc from './misc'
-// import brev from './webgl';
 import scrub from './scrub';
 
 import 'lenis/dist/lenis.css'
@@ -21,11 +20,9 @@ gsap.ticker.lagSmoothing(0);
 
 
 // brev()
-console.log(scrub)
 scrub()
 misc()
 menu()
 
 
 console.log("%cDesigned and built by https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
-{/* <script type="module" src="https://perception-pod.netlify.app/main.js"></script> */}

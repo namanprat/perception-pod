@@ -174,7 +174,6 @@ class Gradient {
         // Get the target canvas element
         this.canvas = document.getElementById('gradient');
         if (!this.canvas) {
-            console.error('Canvas element with id "gradient" not found!');
             return;
         }
 
@@ -229,14 +228,6 @@ class Gradient {
         window.setMouseIntensity = this.setMouseIntensity.bind(this);
         window.setDistortionSpeed = this.setDistortionSpeed.bind(this);
         window.setColors = this.setColors.bind(this);
-
-        console.log('🎨 Enhanced Controls available:');
-        console.log('setMouseIntensity(value) - Adjust mouse interaction (0.0 to 2.0+)');
-        console.log('setDistortionSpeed(value) - Adjust animation speed (0.1 to 3.0+)');
-        console.log('setColors({color1: "#ff0000", color2: "#00ff00", ...}) - Set gradient colors');
-        console.log('Mouse distortion reduced by 70%!');
-        console.log('Available color properties: color1, color2, color3, color4, overlayColor1, overlayColor2, overlayColor3, overlayColor4');
-        console.log('✅ Shader loaded successfully with film grain effect!');
     }
 
     // Helper function to convert CSS hex color to vec3
