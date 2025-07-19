@@ -41,36 +41,7 @@ function misc()
         
       
       
-        // HERO REVEAL      
-        let headerSplit = new SplitText("#header-split", {
-          type: "words, lines", // Split into both lines and words
-          linesClass: "hero-line-wrapper"
-        });
-        
-        const heroTl = gsap.timeline();
-        heroTl
-          .to(".hero-wordmark .hero-path", {
-              delay: 2.35,
-              opacity: 1,
-              yPercent: 0,
-              duration: 1,
-              ease: "power2.inOut",
-              stagger: 0.02
-          }, "<")
-          .from(".hero-nav-item", {
-              delay: 0.3,
-              yPercent: -120,
-              duration: 1.25,
-              ease: "power4.inOut",
-              stagger: 0.1,
-          }, "<")
-          // The animation target is still the words, which is correct!
-          .from(headerSplit.words, {
-              yPercent: 100,
-              duration: 1.25,
-              stagger: 0.02,
-              ease: "power4.inOut",
-          }, "<");
+      
           // Fade .hero_main_wrap on scroll (first 35vh)
 gsap.to(".hero_main_wrap", {
   scrollTrigger: {

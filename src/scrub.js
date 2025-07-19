@@ -64,29 +64,39 @@ function scrub() {
             const duration = end - start;
             const remainingTime = Math.max(MIN_TIME - duration, 0);
             
-            // Play the exit animation for .path elements after loading is complete
-            gsap.to(".preloader-wordmark .path", {
-                delay: (remainingTime / 1000),
-                yPercent: -100,
-                opacity: 0,
-                duration: 0.8,
-                ease: "power3.in",
-                stagger: {
-                    amount: 0.12
-                },
-                onComplete: () => {
-                    // Hide the entire preloader after path animation completes
-                    gsap.to(".preloader_wrap", {
-                        delay: 0.3,
-                        yPercent: -100,
-                        duration: 0.8,
-                        ease: "power3.out",
-                        onComplete: () => {
-                            // re-enable scrolling
-                            gsap.set("body", { overflow: "auto" });
-                        },
-                    });
-                }
+            // Wait for minimum time + 500ms after progress completion, then start exit animations
+            gsap.delayedCall((remainingTime / 1000) + 0.5, () => {
+                // Fade out progress bar and play path exit animation simultaneously
+                gsap.to(".progress-bar", {
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: "power3.out"
+                });
+                
+                // Play the exit animation for .path elements
+                gsap.to(".preloader-wordmark .path", {
+                    yPercent: -100,
+                    opacity: 0,
+                    duration: 0.8,
+                    ease: "power3.in",
+                    stagger: {
+                        amount: 0.12
+                    },
+                    onComplete: () => {
+                        // Hide the entire preloader after path animation completes
+                        gsap.to(".preloader_wrap", {
+                            yPercent: -100,
+                            duration: 0.8,
+                            ease: "power3.out",
+                            onComplete: () => {
+                                // re-enable scrolling
+                                gsap.set("body", { overflow: "auto" });
+                                // Play hero reveal animation immediately when preloader exits
+                                playHeroReveal();
+                            },
+                        });
+                    }
+                });
             });
             
             // Initialize ScrollTrigger after loading is complete
