@@ -1,6 +1,7 @@
+import imagesLoaded from "imagesloaded";
 function misc()
 {
-  const start = performance.now();
+const start = performance.now();
 const imgLoad = new imagesLoaded("body", { background: true }, onImagesLoaded);
 const numImages = imgLoad.images.length;
 imgLoad.on("progress", function (instance, image) {
