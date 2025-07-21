@@ -302,62 +302,220 @@ function scrub() {
 }
 
 function misc() {
+    
+    // Initialize SplitText for all tooltip h2 and p elements with a Map for better tracking
+const splitTextMap = new Map();
+
+// Get all tooltip containers and initialize SplitText for each
+const tooltipContainers = gsap.utils.toArray('.tooltip_contain');
+
+tooltipContainers.forEach(container => {
+  const h2 = container.querySelector('.tooltip-info h2');
+  const p = container.querySelector('.tooltip-info p');
+  
+  if (h2) {
+    const h2Split = new SplitText(h2, {type: "lines, words"});
+    splitTextMap.set(h2, h2Split);
+  }
+  
+  if (p) {
+    const pSplit = new SplitText(p, {type: "lines", linesClass: "line-container"});
+    splitTextMap.set(p, pSplit);
+  }
+});
+
+// Set initial states
+gsap.set('.tooltip-info', { autoAlpha: 0 });
+
+// Apply overflow hidden to line containers
+gsap.set('.line-container', { overflow: 'hidden' });
+
+// Set initial states for all words and lines
+Array.from(splitTextMap.values()).forEach(split => {
+  if (split.words) {
+    gsap.set(split.words, { autoAlpha: 0, y: 100 });
+  }
+  if (split.lines) {
+    gsap.set(split.lines, { autoAlpha: 0, y: 100 });
+  }
+});
+
+// Get all tooltip circles
+const tooltipCircles = gsap.utils.toArray('.tooltip-circle');
+
+// Add click event to each tooltip circle
+tooltipCircles.forEach((circle, index) => {
+  circle.addEventListener('click', () => {
+    // Find the corresponding tooltip-info within the same tooltip_contain
+    const container = circle.closest('.tooltip_contain');
+    const tooltipInfo = container.querySelector('.tooltip-info');
+    const h2 = container.querySelector('.tooltip-info h2');
+    const p = container.querySelector('.tooltip-info p');
+    
+    // Get the split text instances for this specific tooltip
+    const h2Split = splitTextMap.get(h2);
+    const pSplit = splitTextMap.get(p);
+    
+    // Check if splits exist before proceeding
+    if (!h2Split || !pSplit) {
+      console.error('SplitText instances not found for elements:', h2, p);
+      return;
+    }
+    
+    // Create timeline
+    const tl = gsap.timeline();
+    
+    // First show the tooltip container
+    tl.to(tooltipInfo, {
+      autoAlpha: 1,
+      duration: 0.3,
+      ease: "power2.out"
+    })
+    // Then animate in the text elements
+    .to(h2Split.words, {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.02,
+      ease: "power2.out"
+    }, "-=0.1")
+    .to(pSplit.lines, {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out"
+    }, "-=0.3");
+  });
+});
+
+// Optional: Add functionality to hide tooltips when clicking elsewhere
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.tooltip_contain')) {
+    // Hide all visible tooltips
+    const visibleTooltips = gsap.utils.toArray('.tooltip-info').filter(tooltip => 
+      gsap.getProperty(tooltip, "autoAlpha") > 0
+    );
+    
+    visibleTooltips.forEach(tooltip => {
+      const container = tooltip.closest('.tooltip_contain');
+      const h2 = container.querySelector('.tooltip-info h2');
+      const p = container.querySelector('.tooltip-info p');
+      
+      const h2Split = splitTextMap.get(h2);
+      const pSplit = splitTextMap.get(p);
+      
+      // Check if splits exist before proceeding
+      if (!h2Split || !pSplit) {
+        console.error('SplitText instances not found for elements during hide:', h2, p);
+        return;
+      }
+      
+      gsap.to(h2Split.words, {
+        autoAlpha: 0,
+        y: 100,
+        duration: 0.3,
+        stagger: 0.01,
+        ease: "power2.in"
+      });
+      
+      gsap.to(pSplit.lines, {
+        autoAlpha: 0,
+        y: 100,
+        duration: 0.3,
+        stagger: 0.05,
+        ease: "power2.in"
+      });
+      
+      gsap.to(tooltip, {
+        autoAlpha: 0,
+        duration: 0.3,
+        delay: 0.2,
+        ease: "power2.in"
+      });
+    });
+  }
+});
+
+
     document.addEventListener("DOMContentLoaded", function () {
-        // Set initial states - hero elements hidden until preloader completes
+        // DETECT TOUCH DEVICES FOR OPTIMIZATIONS
+        const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
+        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        
+        // INITIAL STATES
         gsap.set("#nav", { yPercent: -100 });
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
         gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
+        gsap.set(".tooltip_wrap", { autoAlpha: 0 });
         
-        // Initialize SplitText for header-split immediately when page loads
+        // --- MODIFIED: TOOLTIP REVEAL ON SCROLL ---
+        // Set initial state for individual tooltips for the reveal animation
+       gsap.set(".tooltip_contain", { autoAlpha: 0 });
+
+const tooltipRevealTl = gsap.timeline({
+    scrollTrigger: {
+        trigger: ".scrub_contain",
+        start: "bottom 20%", // Start when bottom of scrub_wrap is 200vh from viewport top
+        // end: "bottom 200vh",   // End when bottom of scrub_wrap is 100vh from viewport top  
+        scrub: true,
+        markers: true, // Remove this after testing
+    }
+});
+
+// Animate the main wrapper to become visible for the entire duration
+tooltipRevealTl.to(".tooltip_wrap", { autoAlpha: 1 }, 0);
+// Stagger the appearance of individual tooltips within the last 100vh
+tooltipRevealTl.to(".tooltip_contain", {
+    autoAlpha: 1,
+    duration: 0.4,
+    stagger: 1, // Reduced stagger for better distribution in 100vh
+    ease: "none"
+}, 0);
+        
         const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
-            // Create SplitText with lines and words
             headerSplitText = new SplitText("#header-split", {
                 type: "lines, words",
                 linesClass: "split-line"
             });
             
-            // Set initial state for the line wrappers
-            gsap.set(".split-line", { 
-                overflow: "hidden" 
-            });
-            
-            // Set initial state for words - hidden and positioned below
             gsap.set(headerSplitText.words, { 
-                y: "100%" 
+                y: "105%" 
             });
             
         }
 
-        // Magnetic elements interaction
         const magneticElements = document.querySelectorAll('.is-magnetic');
-        const strength = 5;
+        
+        // --- DISABLE MAGNETIC EFFECT ON TOUCH DEVICES ---
+        if (isDesktop) {
+            magneticElements.forEach(elem => {
+                elem.addEventListener('mousemove', (e) => {
+                    const rect = elem.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
 
-        magneticElements.forEach(elem => {
-            elem.addEventListener('mousemove', (e) => {
-                const rect = elem.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
+                    gsap.to(elem, {
+                        x: (x * 0.3),
+                        y: (y * 0.3),
+                        duration: 0.8,
+                        ease: 'power4.out',
+                    });
+                });
 
-                gsap.to(elem, {
-                    x: (x * 0.3),
-                    y: (y * 0.3),
-                    duration: 0.8,
-                    ease: 'power4.out',
+                elem.addEventListener('mouseleave', () => {
+                    gsap.to(elem, {
+                        x: 0,
+                        y: 0,
+                        duration: 1.2,
+                        ease: 'elastic.out(1, 0.6)',
+                    });
                 });
             });
+        }
+        // --- END OF MODIFICATION ---
 
-            elem.addEventListener('mouseleave', () => {
-                gsap.to(elem, {
-                    x: 0,
-                    y: 0,
-                    duration: 1.2,
-                    ease: 'elastic.out(1, 0.6)',
-                });
-            });
-        });
-
-        // Fade .hero_main_wrap on scroll (first 35vh)
         gsap.to(".hero_main_wrap", {
             scrollTrigger: {
                 trigger: ".hero_main_wrap",
@@ -368,6 +526,7 @@ function misc() {
             autoAlpha: 0,
             ease: "none"
         });
+        
 
         // About reveal animation
         const contentText = document.querySelector(".content_text");
@@ -440,8 +599,6 @@ function misc() {
         }
 
         // Card animations (optimized)
-        const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
-        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
         const cards = document.querySelectorAll(".card_wrap");
 
         cards.forEach((card) => {

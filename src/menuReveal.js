@@ -3,7 +3,8 @@ import { gsap } from 'gsap';
 function menu() {
 
     gsap.set(".contact_wrap", { autoAlpha: 0 });
-    gsap.set(".contact-contain", { opacity: 0, width: 0 });
+    gsap.set(".contact-contain", { opacity: 0 });
+    // gsap.set (".contact-contain .u-hflex-between-center", { y:0 });
 
       const openTl = gsap.timeline({ paused: true });
 
@@ -15,31 +16,40 @@ function menu() {
             })
             .to('.contact-contain', { 
                 opacity: 1,
-                width: 'auto', 
                 duration: 1.5, 
                 ease: 'power4.inOut' 
+            }, '<')
+            .from('.contact-close', { 
+                opacity: 0,
+                duration: 2, 
+                ease: 'power3.inOut' 
             }, '<')
             .from('.contact-contain *', { 
                 opacity: 0,
                 duration: 2, 
                 ease: 'power3.inOut' 
             }, '<')
+            //  .to(".contact-contain .u-text-style-h2", { 
+            //     y: 0,
+            //     duration: 1.5, 
+            //     ease: 'power4.inOut' 
+            // }, '<')
             .from('form h3', { 
-                delay: 0.3,
+                delay: -0.1,
                 y: -100,
-                stagger: {amount: 0.15},
+                stagger: {amount: 0.2},
                 duration: 2.25, 
-                ease: 'expo.inOut' 
+                ease: 'power4.inOut' 
             }, '<');
 
         document.querySelector('.contact-flip').addEventListener('click', () => {
             openTl.play();
         });
+        document.querySelector('.contact-flip-2').addEventListener('click', () => {
+            openTl.play();
+        });
 
          document.querySelector('.contact-close').addEventListener('click', () => {
-             openTl.reverse();
-         });
-          document.querySelector('.contact-close-2').addEventListener('click', () => {
              openTl.reverse();
          });
 

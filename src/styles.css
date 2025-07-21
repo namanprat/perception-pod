@@ -4,8 +4,14 @@
 body {
   overflow: hidden;
 }
+
+.split-line {
+  margin-top: -5px;
+  padding-bottom: 5px;
+  overflow: hidden;
+}
 * {
-  -ms-overflow-style: none;  /* IE and Edge */
+  -ms-overflow-style: none;  /* IE and Edge */ 
   scrollbar-width: none;  /* Firefox */
 } 
 canvas {
@@ -13,6 +19,19 @@ canvas {
   height: 100%;
   display: block;
 } 
+.hero_main_wrap {
+  display: block;
+}
+.line-container {
+  overflow: hidden;
+}
+.tooltip_wrap,
+.tooltip-info {
+  display: flex;
+}
+.scrub_contain {
+  margin-top: -100vh;
+}
 textarea,
 .form_wrap input {  
   box-sizing: border-box; 
@@ -22,6 +41,10 @@ textarea,
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+}
+.scrub_contain canvas {
+  position: absolute;
+  /* background-color: red; */
 }
 :root {
   --space: 20%;
