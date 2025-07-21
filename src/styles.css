@@ -11,7 +11,7 @@ body {
   overflow: hidden;
 }
 .header-line-wrapper {
-  width: min-content;
+  width: fit-content;
 }
 .footer_contain h1 {
   text-wrap: nowrap;
@@ -86,6 +86,7 @@ textarea,
 .header-line-wrapper {
   overflow: hidden;
   padding: 0.1em ;
+  padding-left: 0 !important;
 }
 
 
