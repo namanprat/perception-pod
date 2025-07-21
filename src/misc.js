@@ -597,6 +597,18 @@ tooltipRevealTl.to(".tooltip_contain", {
             getTime();
             setInterval(getTime, 1000);
         }
+        const clockEl2 = document.getElementById("clock-2");
+        if (clockEl2) {
+            const getTime = function () {
+                clockEl2.innerHTML = new Date().toLocaleString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    timeStyle: "long",
+                    hourCycle: "h24"
+                });
+            };
+            getTime();
+            setInterval(getTime, 1000);
+        }
 
         // Card animations (optimized)
         const cards = document.querySelectorAll(".card_wrap");
