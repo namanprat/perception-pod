@@ -10,6 +10,12 @@ body {
   padding-bottom: 5px;
   overflow: hidden;
 }
+.header-line-wrapper {
+  width: min-content;
+}
+.footer_contain h1 {
+  text-wrap: nowrap;
+}
 * {
   -ms-overflow-style: none;  /* IE and Edge */ 
   scrollbar-width: none;  /* Firefox */
