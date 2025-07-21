@@ -459,7 +459,7 @@ const tooltipRevealTl = gsap.timeline({
         start: "bottom 20%", // Start when bottom of scrub_wrap is 200vh from viewport top
         // end: "bottom 200vh",   // End when bottom of scrub_wrap is 100vh from viewport top  
         scrub: true,
-        markers: true, // Remove this after testing
+   //     markers: true, // Remove this after testing
     }
 });
 
