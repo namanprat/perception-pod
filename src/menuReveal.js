@@ -48,6 +48,9 @@ function menu() {
         document.querySelector('.contact-flip-2').addEventListener('click', () => {
             openTl.play();
         });
+        document.querySelector('.contact-flip-3').addEventListener('click', () => {
+            openTl.play();
+        });
 
          document.querySelector('.contact-close').addEventListener('click', () => {
              openTl.reverse();
