@@ -492,8 +492,8 @@ function misc() {
             linesClass: "header-line-wrapper"
         });
         let bodyText = new SplitText("#body-reveal", {
-            type: "words, lines",
-            linesClass: "body-line-wrapper"
+            type: "words",
+            wordsClass: "u-overflow-hidden"
         });
 
         const revealTl = gsap.timeline({
