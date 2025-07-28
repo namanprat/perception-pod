@@ -1,27 +1,25 @@
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, Flip);
 
 function scrub() {
-
-  const preloaderTl = gsap.timeline();
-        preloaderTl
-          .to(".preloader-wordmark", { opacity: 1, yPercent: 0, duration: 0.2 })
-          .from(".preloader-wordmark .path", {
+    const preloaderTl = gsap.timeline();
+    preloaderTl
+        .to(".preloader-wordmark", { opacity: 1, yPercent: 0, duration: 0.2 })
+        .from(".preloader-wordmark .path", {
             delay: 0.2,
             opacity: 0,
             yPercent: 100,
             duration: 0.8,
             ease: "power3.out",
             stagger: {
-              amount: 0.25
+                amount: 0.25
             }
-          })
-          // Remove the exit animation from here - it will be triggered after loading
-          
+        });
+        
     const start = performance.now();
     
     // Generate image URLs array
     const imageUrls = [];
-    for (let i = 1; i <= 115; i++) {
+    for (let i = 1; i <= 100; i++) {
         imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
     }
     
@@ -44,7 +42,7 @@ function scrub() {
             const progress = loadedCount / imageSequence.totalImages;
             imageSequence.loadingProgress = progress;
             
-            console.log(`image ${loadedCount} out of ${imageSequence.totalImages} loaded (${Math.round(progress * 100)}%)`);
+            // console.log(`image ${loadedCount} out of ${imageSequence.totalImages} loaded (${Math.round(progress * 100)}%)`);
             
             // Animate progress bar
             gsap.to(".progress-bar", {
@@ -57,7 +55,7 @@ function scrub() {
         // Handle completion
         function onAllImagesLoaded() {
             const end = performance.now();
-            console.log(`Time taken to load ${imageSequence.totalImages} images: ${Math.round(end - start)}ms`);
+            // console.log(`Time taken to load ${imageSequence.totalImages} images: ${Math.round(end - start)}ms`);
             
             // Calculate remaining time to ensure loader is displayed for a minimum time
             const MIN_TIME = 1000;
@@ -92,7 +90,9 @@ function scrub() {
                                 // re-enable scrolling
                                 gsap.set("body", { overflow: "auto" });
                                 // Play hero reveal animation immediately when preloader exits
-                                playHeroReveal();
+                                if (typeof playHeroReveal === 'function') {
+                                    playHeroReveal();
+                                }
                             },
                         });
                     }
@@ -245,7 +245,6 @@ function scrub() {
             }
         });
         
-        console.log('Image sequence initialized with', imageSequence.totalImages, 'images');
     }
     
     // Start loading images with progress tracking
@@ -258,4 +257,112 @@ function scrub() {
     });
 }
 
-export default scrub;
+// --- SCROLL-BASED TOOLTIP REVEAL WITH TEXT ANIMATIONS ---
+function initTooltipAnimations() {
+    // Initialize SplitText for all tooltip h2 and p elements with a Map for better tracking
+    const splitTextMap = new Map();
+
+    // Get all tooltip containers and initialize SplitText for each
+    const tooltipContainers = gsap.utils.toArray('.tooltip_contain');
+
+    tooltipContainers.forEach(container => {
+      const h2 = container.querySelector('.tooltip-info h2');
+      const p = container.querySelector('.tooltip-info p');
+      
+      if (h2) {
+        const h2Split = new SplitText(h2, {type: "lines, words"});
+        splitTextMap.set(h2, h2Split);
+      }
+      
+      if (p) {
+        const pSplit = new SplitText(p, {type: "lines", linesClass: "line-container"});
+        splitTextMap.set(p, pSplit);
+      }
+    });
+
+    // Set initial states for tooltip-info containers
+    gsap.set('.tooltip-info', { autoAlpha: 0 });
+
+    // Apply overflow hidden to line containers
+    gsap.set('.line-container', { overflow: 'hidden' });
+
+    // Set initial states for all words and lines
+    Array.from(splitTextMap.values()).forEach(split => {
+      if (split.words) {
+        gsap.set(split.words, { autoAlpha: 0, y: 100 });
+      }
+      if (split.lines) {
+        gsap.set(split.lines, { autoAlpha: 0, y: 100 });
+      }
+    });
+
+    const tooltipRevealTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: ".scrub_contain",
+            start: "bottom 20%", 
+            scrub: true,
+            onUpdate: (self) => {
+                const progress = self.progress;
+                
+                // Animate tooltip containers to become visible
+                gsap.to(".tooltip_wrap", { autoAlpha: 1, duration: 0.1 });
+                gsap.to(".tooltip_contain", { autoAlpha: 1, duration: 0.1 });
+                
+                // Calculate which tooltips should be animated based on progress
+                const totalTooltips = tooltipContainers.length;
+                const currentTooltipIndex = Math.floor(progress * totalTooltips);
+                
+                tooltipContainers.forEach((container, index) => {
+                    if (index <= currentTooltipIndex) {
+                        const tooltipInfo = container.querySelector('.tooltip-info');
+                        const h2 = container.querySelector('.tooltip-info h2');
+                        const p = container.querySelector('.tooltip-info p');
+                        
+                        const h2Split = splitTextMap.get(h2);
+                        const pSplit = splitTextMap.get(p);
+                        
+                        if (h2Split && pSplit && gsap.getProperty(tooltipInfo, "autoAlpha") === 0) {
+                            // Create one-time animation for this tooltip
+                            const tl = gsap.timeline();
+                            
+                            // First show the tooltip container
+                            tl.to(tooltipInfo, {
+                                autoAlpha: 1,
+                                duration: 0.3,
+                                ease: "power2.out"
+                            })
+                            // Then animate in the text elements
+                            .to(h2Split.words, {
+                                autoAlpha: 1,
+                                y: 0,
+                                duration: 0.6,
+                                stagger: 0.02,
+                                ease: "power2.out"
+                            }, "-=0.1")
+                            .to(pSplit.lines, {
+                                autoAlpha: 1,
+                                y: 0,
+                                duration: 0.5,
+                                stagger: 0.1,
+                                ease: "power2.out"
+                            }, "-=0.3");
+                        }
+                    }
+                });
+            }
+        }
+    });
+}
+
+// Initialize tooltip animations when DOM is ready
+document.addEventListener("DOMContentLoaded", function () {
+    // Set initial states for tooltips
+    gsap.set(".tooltip_wrap", { autoAlpha: 0 });
+    gsap.set(".tooltip_contain", { autoAlpha: 0 });
+    
+    // Initialize tooltip animations
+    initTooltipAnimations();
+});
+
+// Export functions
+export { scrub, initTooltipAnimations };
