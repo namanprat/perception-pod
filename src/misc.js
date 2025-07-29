@@ -315,16 +315,15 @@ function misc() {
       const p = container.querySelector('.tooltip-info p');
       
       if (p) {
-        const pSplit = new SplitText(p, {type: "words", wordsClass: "word-container"});
+        const pSplit = new SplitText(p, {type: "lines", linesClass: "line-container"});
         splitTextMap.set(p, pSplit);
         
-        // Wrap each word in a div with u-overflow-hidden class (same as #body-reveal)
-        pSplit.words.forEach(word => {
+        // Wrap each line-container in a div with u-overflow-hidden class
+        pSplit.lines.forEach(line => {
           const wrapper = document.createElement('div');
           wrapper.className = 'u-overflow-hidden';
-          wrapper.style.display = 'inline-block'; // Make wrapper inline to preserve word flow
-          word.parentNode.insertBefore(wrapper, word);
-          wrapper.appendChild(word);
+          line.parentNode.insertBefore(wrapper, line);
+          wrapper.appendChild(line);
         });
       }
     });
@@ -337,6 +336,9 @@ function misc() {
     Array.from(splitTextMap.values()).forEach(split => {
       if (split.words) {
         gsap.set(split.words, { autoAlpha: 0, y: 100 });
+      }
+      if (split.lines) {
+        gsap.set(split.lines, { autoAlpha: 0, y: 100 });
       }
     });
 
@@ -415,8 +417,8 @@ function misc() {
                                     });
                                     
                                     // Reset other split text
-                                    if (otherPSplit && otherPSplit.words) {
-                                        gsap.set(otherPSplit.words, {
+                                    if (otherPSplit && otherPSplit.lines) {
+                                        gsap.set(otherPSplit.lines, {
                                             autoAlpha: 0,
                                             y: 100
                                         });
@@ -437,8 +439,8 @@ function misc() {
                             duration: 0.3,
                             ease: "power2.out"
                         })
-                        // Then animate in the paragraph words (same as #body-reveal)
-                        .to(pSplit.words, {
+                        // Then animate in the paragraph lines
+                        .to(pSplit.lines, {
                             autoAlpha: 1,
                             y: 0,
                             duration: 1.5,
@@ -466,8 +468,8 @@ function misc() {
                         // Create animation timeline for closing
                         const closeTl = gsap.timeline();
                         
-                        // First animate out the paragraph words
-                        closeTl.to(pSplit.words, {
+                        // First animate out the paragraph lines
+                        closeTl.to(pSplit.lines, {
                             autoAlpha: 0,
                             y: 100,
                             duration: 0.8,
