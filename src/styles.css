@@ -7,6 +7,10 @@ body {
   li {
     display: list-item !important;
   }
+  .u-overflow {
+    overflow: hidden;
+    width: fit-content;
+  }
 .split-line {
   margin-top: -5px;
   padding-bottom: 5px;
