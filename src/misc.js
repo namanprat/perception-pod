@@ -486,7 +486,6 @@ function misc() {
                             
                             gsap.to(tooltipCircle, {
                                 autoAlpha: 1,
-                                scale: 1,
                                 duration: 0.6,
                                 ease: "back.out(1.7)"
                             });
@@ -503,7 +502,7 @@ function misc() {
                 revealedCircles.clear();
                 
                 // Hide all circles
-                gsap.set('.tooltip-circle', { autoAlpha: 0, scale: 0 });
+                gsap.set('.tooltip-circle', { autoAlpha: 0});
             }
         }
     });
