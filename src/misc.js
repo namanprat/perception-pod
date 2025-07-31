@@ -83,25 +83,22 @@ function scrub() {
         let loadedCount = 0;
         let hasError = false;
         
-        // Update progress bar
+        // Update progress counter
         function updateProgress() {
             const progress = loadedCount / imageSequence.totalImages;
             imageSequence.loadingProgress = progress;
             
-            // console.log(`image ${loadedCount} out of ${imageSequence.totalImages} loaded (${Math.round(progress * 100)}%)`);
-            
-            // Animate progress bar
-            gsap.to(".progress-bar", {
-                delay: 0.5,
-                scaleX: progress,
-                ease: "power3.out",
-            });
+            // Update progress counter with box brackets
+            const progressElement = document.querySelector("#progress-number");
+            if (progressElement) {
+                const percentage = Math.round(progress * 100);
+                progressElement.textContent = `[${percentage}%]`;
+            }
         }
         
         // Handle completion
         function onAllImagesLoaded() {
             const end = performance.now();
-            // console.log(`Time taken to load ${imageSequence.totalImages} images: ${Math.round(end - start)}ms`);
             
             // Calculate remaining time to ensure loader is displayed for a minimum time
             const MIN_TIME = 1000;
@@ -110,12 +107,25 @@ function scrub() {
             
             // Wait for minimum time + 500ms after progress completion, then start exit animations
             gsap.delayedCall((remainingTime / 1000) + 0.5, () => {
-                // Fade out progress bar and play path exit animation simultaneously
-                gsap.to(".progress-bar", {
-                    opacity: 0,
-                    duration: 0.5,
-                    ease: "power3.out"
-                });
+                // Fade out .progress-bottom instead of progress counter
+                const progressBottom = document.querySelector(".progress-bottom");
+                const preloaderH4 = document.querySelector(".preloader h4");
+                
+                if (progressBottom) {
+                    gsap.to(progressBottom, {
+                        opacity: 0,
+                        duration: 0.5,
+                        ease: "power3.out"
+                    });
+                }
+                
+                if (preloaderH4) {
+                    gsap.to(preloaderH4, {
+                        opacity: 0,
+                        duration: 0.5,
+                        ease: "power3.out"
+                    });
+                }
                 
                 // Play the exit animation for .path elements
                 gsap.to(".preloader-wordmark .path", {
@@ -303,59 +313,177 @@ function scrub() {
 
 function misc() {
     
-    // --- SCROLL-BASED TOOLTIP REVEAL WITH CLICK-TO-SHOW TEXT ANIMATIONS ---
-    // Initialize SplitText for all tooltip h2 and p elements with a Map for better tracking
-    const splitTextMap = new Map();
-    const revealedCircles = new Set(); // Track which circles have been revealed
-
-    // Get all tooltip containers and initialize SplitText for each
+    // --- TOOLTIP SYSTEM WITH SPLITTEXT ---
+    const revealedCircles = new Set();
     const tooltipContainers = gsap.utils.toArray('.tooltip_contain');
-
-    tooltipContainers.forEach(container => {
-      const p = container.querySelector('.tooltip-info p');
-      
-      if (p) {
-        const pSplit = new SplitText(p, {type: "lines", linesClass: "line-container"});
-        splitTextMap.set(p, pSplit);
-        
-        // Wrap each line-container in a div with u-overflow-hidden class
-        pSplit.lines.forEach(line => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'u-overflow-hidden';
-          line.parentNode.insertBefore(wrapper, line);
-          wrapper.appendChild(line);
+    let tooltipTextAnimated = false; // Track if initial animation has played
+    
+    // Get tooltip display elements
+    const tooltipHeader = document.querySelector('#tooltip-header');
+    const tooltipBody = document.querySelector('#tooltip-body');
+    
+    // Variables to store current SplitText instances
+    let currentHeaderSplit = null;
+    let currentBodySplit = null;
+    
+    // Make sure tooltip elements are visible
+    if (tooltipHeader) {
+        gsap.set(tooltipHeader, { autoAlpha: 1, display: 'block' });
+        // Create initial SplitText instance
+        currentHeaderSplit = new SplitText(tooltipHeader, {
+            type: "words",
+            wordsClass: "tooltip-word"
         });
-      }
-    });
+    }
+    
+    if (tooltipBody) {
+        gsap.set(tooltipBody, { autoAlpha: 1, display: 'block' });
+        // Create initial SplitText instance for words
+        currentBodySplit = new SplitText(tooltipBody, {
+            type: "words",
+            wordsClass: "tooltip-body-word"
+        });
+        
+        // Wrap each word in a container with u-overflow-hidden class (same as body-reveal)
+        currentBodySplit.words.forEach(word => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'u-overflow-hidden';
+            wrapper.style.display = 'inline-block';
+            word.parentNode.insertBefore(wrapper, word);
+            wrapper.appendChild(word);
+        });
+        
+        // Set initial state for body words (same as body-reveal)
+        gsap.set(currentBodySplit.words, { autoAlpha: 1, y: 0 });
+    }
 
-    // Set initial states for tooltip elements
-    gsap.set('.tooltip-info', { autoAlpha: 0, display: 'block' });
+    // Enhanced function to update tooltip content with SplitText animations
+    function updateTooltipContent(headerText, bodyText) {
+        const tl = gsap.timeline();
+        
+        // Store references to old splits
+        const oldHeaderSplit = currentHeaderSplit;
+        const oldBodySplit = currentBodySplit;
+        
+        // Animate out the current text with stagger
+        if (oldHeaderSplit && oldHeaderSplit.words && oldHeaderSplit.words.length > 0) {
+            tl.to(oldHeaderSplit.words, {
+               autoAlpha: 0,
+                y: -50,
+                duration: 0.4,
+                stagger: { amount: 0.1, from: "end" },
+                ease: "power2.in"
+            });
+        }
+        
+        if (oldBodySplit && oldBodySplit.words && oldBodySplit.words.length > 0) {
+            tl.to(oldBodySplit.words, {
+                autoAlpha: 0,
+                y: -50,
+                duration: 0.4,
+                stagger: { amount: 0.1, from: "end" },
+                ease: "power2.in"
+            }, "-=0.15");
+        }
+        
+        // Update content and recreate SplitText instances
+        tl.add(() => {
+            // Revert existing splits before updating content
+            if (oldHeaderSplit) oldHeaderSplit.revert();
+            if (oldBodySplit) oldBodySplit.revert();
+            
+            // Update the text content and create new splits
+            if (tooltipHeader && headerText !== null && headerText !== undefined) {
+                tooltipHeader.textContent = headerText;
+                // Create new SplitText instance for words only
+                currentHeaderSplit = new SplitText(tooltipHeader, {
+                    type: "words",
+                    wordsClass: "tooltip-word"
+                });
+                // Set initial state for new words
+                if (currentHeaderSplit.words && currentHeaderSplit.words.length > 0) {
+                    gsap.set(currentHeaderSplit.words, {
+                        y: 15,
+                        opacity: 0
+                    });
+                }
+            }
+            
+            if (tooltipBody && bodyText !== null && bodyText !== undefined) {
+                tooltipBody.textContent = bodyText;
+                // Create new SplitText instance for words
+                currentBodySplit = new SplitText(tooltipBody, {
+                    type: "words",
+                    wordsClass: "tooltip-body-word"
+                });
+                
+                // Wrap each word in a container with u-overflow-hidden class (same as body-reveal)
+                currentBodySplit.words.forEach(word => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'u-overflow-hidden';
+                    wrapper.style.display = 'inline-block';
+                    word.parentNode.insertBefore(wrapper, word);
+                    wrapper.appendChild(word);
+                });
+                
+                // Set initial state for body words (same as body-reveal)
+                if (currentBodySplit.words && currentBodySplit.words.length > 0) {
+                    gsap.set(currentBodySplit.words, {
+                        autoAlpha: 0,
+                        y: 100
+                    });
+                }
+            }
+            
+            // Animate in the new text immediately after creation
+            if (currentHeaderSplit && currentHeaderSplit.words && currentHeaderSplit.words.length > 0) {
+                gsap.to(currentHeaderSplit.words, {
+                 autoAlpha: 1,
+                        y: 0,
+                        duration: 0.8,
+                        stagger: { amount: 0.4 },
+                        ease: "power3.out",
+                });
+            }
+            
+            // Animate in body words with same style as body-reveal
+            if (currentBodySplit && currentBodySplit.words && currentBodySplit.words.length > 0) {
+                gsap.to(currentBodySplit.words, {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 1.5,
+                    stagger: {amount: 0.5},
+                    ease: "power4.inOut"
+                });
+            }
+        });
+    }
+
+    // Set initial states for tooltip circles
     gsap.set('.tooltip-circle', { autoAlpha: 0, scale: 0 });
-
-    // Set initial states for all words and lines
-    Array.from(splitTextMap.values()).forEach(split => {
-      if (split.words) {
-        gsap.set(split.words, { autoAlpha: 0, y: 100 });
-      }
-      if (split.lines) {
-        gsap.set(split.lines, { autoAlpha: 0, y: 100 });
-      }
-    });
 
     // Scroll-triggered circle reveal animation
     const tooltipRevealTl = gsap.timeline({
         scrollTrigger: {
             trigger: ".scrub_contain",
             start: "bottom 20%", 
+            end: "bottom top",
             scrub: true,
             onUpdate: (self) => {
                 const progress = self.progress;
                 
-                // Animate tooltip containers to become visible
                 gsap.to(".tooltip_wrap", { autoAlpha: 1, duration: 0.1 });
                 gsap.to(".tooltip_contain", { autoAlpha: 1, duration: 0.1 });
                 
-                // Calculate which tooltip circles should be animated based on progress
+                // Animate tooltip text when tooltip_wrap becomes visible (only once)
+                if (!tooltipTextAnimated) {
+                    tooltipTextAnimated = true;
+                    updateTooltipContent(
+                        tooltipHeader ? tooltipHeader.textContent : 'Default Header',
+                        tooltipBody ? tooltipBody.textContent : 'Default Body'
+                    );
+                }
+                
                 const totalTooltips = tooltipContainers.length;
                 const currentTooltipIndex = Math.floor(progress * totalTooltips);
                 
@@ -366,7 +494,6 @@ function misc() {
                         if (tooltipCircle && !revealedCircles.has(tooltipCircle)) {
                             revealedCircles.add(tooltipCircle);
                             
-                            // Animate circle reveal
                             gsap.to(tooltipCircle, {
                                 autoAlpha: 1,
                                 scale: 1,
@@ -376,121 +503,60 @@ function misc() {
                         }
                     }
                 });
+            },
+            onLeaveBack: () => {
+                // Reset tooltip wrap opacity when scrolling back to top
+                gsap.to(".tooltip_wrap", { autoAlpha: 0, duration: 0.1 });
+                gsap.to(".tooltip_contain", { autoAlpha: 0, duration: 0.1 });
+                
+                // Reset revealed circles set and animation flag
+                revealedCircles.clear();
+                tooltipTextAnimated = false;
+                
+                // Hide all circles
+                gsap.set('.tooltip-circle', { autoAlpha: 0, scale: 0 });
             }
         }
     });
 
-    // Click handlers for tooltip circles
-    tooltipContainers.forEach(container => {
-        const tooltipCircle = container.querySelector('.tooltip-circle');
-        const tooltipInfo = container.querySelector('.tooltip-info');
-        const p = container.querySelector('.tooltip-info p');
+    // Click and hover handlers
+    const allTooltipCircles = document.querySelectorAll('.tooltip-circle');
+    
+    allTooltipCircles.forEach((circle, index) => {
+        const headerData = circle.getAttribute('data-header');
+        const bodyData = circle.getAttribute('data-body');
         
-        if (tooltipCircle && tooltipInfo && p) {
-            let isOpen = false;
+        // Add click event listener
+        circle.addEventListener('click', function(event) {
+            // Read data attributes from the clicked element
+            const clickedHeaderData = this.getAttribute('data-header');
+            const clickedBodyData = this.getAttribute('data-body');
             
-            tooltipCircle.addEventListener('click', () => {
-                if (!isOpen) {
-                    const pSplit = splitTextMap.get(p);
-                    
-                    if (pSplit) {
-                        // First, hide all other tooltip-info elements
-                        tooltipContainers.forEach(otherContainer => {
-                            if (otherContainer !== container) {
-                                const otherTooltipInfo = otherContainer.querySelector('.tooltip-info');
-                                const otherP = otherContainer.querySelector('.tooltip-info p');
-                                
-                                if (otherTooltipInfo && otherP) {
-                                    const otherPSplit = splitTextMap.get(otherP);
-                                    
-                                    // Reset other container's isOpen state
-                                    const otherCircle = otherContainer.querySelector('.tooltip-circle');
-                                    if (otherCircle) {
-                                        otherCircle.isOpen = false;
-                                    }
-                                    
-                                    // Animate other tooltip out
-                                    gsap.to(otherTooltipInfo, {
-                                        autoAlpha: 0,
-                                        duration: 0.4,
-                                        ease: "power4.inOut"
-                                    });
-                                    
-                                    // Reset other split text
-                                    if (otherPSplit && otherPSplit.lines) {
-                                        gsap.set(otherPSplit.lines, {
-                                            autoAlpha: 0,
-                                            y: 100
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                        
-                        isOpen = true;
-                        tooltipCircle.isOpen = true;
-                        
-                        // Create animation timeline for opening current tooltip
-                        const openTl = gsap.timeline();
-                        
-                        // Show the tooltip container
-                        openTl.to(tooltipInfo, {
-                            autoAlpha: 1,
-                            duration: 0.3,
-                            ease: "power2.out"
-                        })
-                        // Then animate in the paragraph lines
-                        .to(pSplit.lines, {
-                            autoAlpha: 1,
-                            y: 0,
-                            duration: 1.5,
-                            stagger: {amount: 0.5},
-                            ease: "power4.inOut"
-                        }, "<0.1");
-                        
-                        // Add a subtle scale effect to the circle when clicked
-                        gsap.to(tooltipCircle, {
-                            scale: 1.1,
-                            duration: 0.2,
-                            ease: "power2.out",
-                            yoyo: true,
-                            repeat: 1
-                        });
-                    }
-                } else {
-                    // Close the current tooltip
-                    const pSplit = splitTextMap.get(p);
-                    
-                    if (pSplit) {
-                        isOpen = false;
-                        tooltipCircle.isOpen = false;
-                        
-                        // Create animation timeline for closing
-                        const closeTl = gsap.timeline();
-                        
-                        // First animate out the paragraph lines
-                        closeTl.to(pSplit.lines, {
-                            autoAlpha: 0,
-                            y: 100,
-                            duration: 0.8,
-                            stagger: {amount: 0.3, from: "end"},
-                            ease: "power4.in"
-                        })
-                        // Then hide the tooltip container
-                        .to(tooltipInfo, {
-                            autoAlpha: 0,
-                            duration: 0.2,
-                            ease: "power2.in"
-                        }, "-=0.2");
-                    }
-                }
+            // Update the tooltip content with SplitText animation
+            updateTooltipContent(clickedHeaderData || 'No Header', clickedBodyData || 'No Body');
+            
+            // Scale animation on click
+            gsap.to(this, {
+                scale: 1.2,
+                duration: 0.1,
+                ease: "power2.out",
+                yoyo: true,
+                repeat: 1
             });
+        });
+        
+        // Add hover event listeners
+        circle.addEventListener('mouseenter', function(event) {
+            // Read data attributes from the hovered element
+            const hoveredHeaderData = this.getAttribute('data-header');
+            const hoveredBodyData = this.getAttribute('data-body');
             
-            // Store the isOpen state on the circle element for external access
-            tooltipCircle.isOpen = false;
-        }
+            // Update the tooltip content with SplitText animation on hover
+            updateTooltipContent(hoveredHeaderData || 'No Header', hoveredBodyData || 'No Body');
+        });
     });
-    // --- END OF TOOLTIP MODIFICATION ---
+
+    // --- END OF TOOLTIP SYSTEM ---
 
     document.addEventListener("DOMContentLoaded", function () {
         // DETECT TOUCH DEVICES FOR OPTIMIZATIONS
@@ -857,6 +923,66 @@ function misc() {
             onEnter: () => showNavTimeline.restart(),
             onLeaveBack: () => hideNavTimeline.restart()
         });
+
+        // --- FOOTER NAVIGATION HIDE/SHOW AND HERO-WORDMARK REVEAL ---
+        // Check if footer exists
+        const footer = document.querySelector('footer');
+        
+        if (footer) {
+            // Get ALL .path elements in footer_wordmark (not just within footer)
+            const footerWordmarkPaths = document.querySelectorAll('.footer-path');
+            
+            if (footerWordmarkPaths.length > 0) {
+                // Set initial state - same as hero wordmark
+                gsap.set(footerWordmarkPaths, { 
+                    yPercent: 100, 
+                    opacity: 0 
+                });
+            }
+
+            // Create ScrollTrigger for footer navigation AND wordmark reveal
+            ScrollTrigger.create({
+                trigger: footer,
+                start: "top 80%", // Trigger earlier
+                end: "top 50%",
+                id: "footer-animations",
+                onEnter: () => {
+                    // Hide navbar
+                    hideNavTimeline.restart();
+                    
+                    // Reveal footer wordmark with same animation as hero
+                    if (footerWordmarkPaths.length > 0) {
+                        gsap.to(footerWordmarkPaths, {
+                            yPercent: 0,
+                            opacity: 1,
+                            duration: 1.2,
+                            ease: "power3.out",
+                            stagger: {
+                                amount: 0.3
+                            }
+                        });
+                    }
+                },
+                onLeaveBack: () => {
+                    // Show navbar
+                    showNavTimeline.restart();
+                    
+                    // Hide footer wordmark
+                    if (footerWordmarkPaths.length > 0) {
+                        gsap.to(footerWordmarkPaths, {
+                            yPercent: 0,
+                            opacity: 1,
+                            duration: 1.2,
+                            ease: "power3.out",
+                            stagger: {
+                                amount: 0.3
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        // --- END OF FOOTER MODIFICATIONS ---
 
         // Hamburger menu flip animation
         document.querySelectorAll(".nav_wrap").forEach(function (navWrap) {
