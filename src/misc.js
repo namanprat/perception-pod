@@ -628,17 +628,10 @@ function misc() {
 
     // Add hover and click effects for tooltip circles
     tooltipCircles.forEach((circle, index) => {
-        let hoverTimeout = null;
         
         // Hover enter effect
         circle.addEventListener('mouseenter', function() {
-            // Clear any existing timeout
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            
-            // Visual hover effect
+            // Visual hover effect (works on both desktop and mobile)
             gsap.to(this, {
                 scale: 1.3,
                 duration: 0.3,
@@ -656,33 +649,32 @@ function misc() {
                 }
             });
             
-            // Set hovering state
-            isHovering = true;
-            
-            // Show hover text with slight delay for better UX
-            hoverTimeout = setTimeout(() => {
-                if (isHovering) { // Check if still hovering
-                    const hoverHeaderData = this.getAttribute('data-hover-header');
-                    const hoverBodyData = this.getAttribute('data-hover-body');
-                    
-                    // Use hover data if available, otherwise use click data as fallback
-                    const headerText = hoverHeaderData || this.getAttribute('data-header') || `Preview ${index + 1}`;
-                    const bodyText = hoverBodyData || this.getAttribute('data-body') || `Hover preview for circle ${index + 1}. Click to see full content.`;
-                    
-                    updateTooltipContent(headerText, bodyText);
-                }
-            }, 150); // Small delay to prevent flickering on quick mouse movements
+            // Only change text on desktop
+            if (!isTouchDevice) {
+                // Set hovering state
+                isHovering = true;
+                
+                // Clear any active circle state since we're now hovering
+                activeCircle = null;
+                
+                // Remove active class from all circles
+                tooltipCircles.forEach(c => c.classList.remove('tooltip-active'));
+                
+                // Show hover text immediately on desktop
+                const hoverHeaderData = this.getAttribute('data-hover-header');
+                const hoverBodyData = this.getAttribute('data-hover-body');
+                
+                // Use hover data if available, otherwise use click data as fallback
+                const headerText = hoverHeaderData || this.getAttribute('data-header') || `Preview ${index + 1}`;
+                const bodyText = hoverBodyData || this.getAttribute('data-body') || `Content for circle ${index + 1}. This text will stay until you hover another circle.`;
+                
+                updateTooltipContent(headerText, bodyText);
+            }
         });
         
         // Hover leave effect
         circle.addEventListener('mouseleave', function() {
-            // Clear timeout if hovering stopped before content was shown
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            
-            // Visual hover effect
+            // Visual hover effect (works on both desktop and mobile)
             gsap.to(this, {
                 scale: 1,
                 duration: 0.4,
@@ -696,25 +688,17 @@ function misc() {
                 ease: "power2.out"
             });
             
-            // Reset hovering state
-            isHovering = false;
-            
-            // Only restore content if no circle is currently active
-            setTimeout(() => {
-                if (!isHovering && !activeCircle) {
-                    restoreOriginalTooltip();
-                }
-            }, 100);
+            // On desktop, we DON'T reset the text on mouse leave
+            // Text stays until hovering another circle
+            if (!isTouchDevice) {
+                // Keep the text but reset hovering state
+                isHovering = false;
+                // Don't restore original content - let it persist
+            }
         });
         
         // Click event with data attributes
         circle.addEventListener('click', function(event) {
-            // Clear any hover timeout
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-                hoverTimeout = null;
-            }
-            
             // Reset hovering state
             isHovering = false;
             
