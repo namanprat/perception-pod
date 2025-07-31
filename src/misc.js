@@ -315,7 +315,7 @@ function misc() {
     
     // --- TOOLTIP SYSTEM WITH SPLITTEXT ---
     const revealedCircles = new Set();
-    const tooltipContainers = gsap.utils.toArray('.tooltip_circle');
+    const tooltipContainers = gsap.utils.toArray('.tooltip-circle');
     let tooltipTextAnimated = false; // Track if initial animation has played
     
     // Get tooltip display elements
@@ -473,7 +473,7 @@ function misc() {
                 const progress = self.progress;
                 
                 gsap.to(".tooltip_wrap", { autoAlpha: 1, duration: 0.1 });
-                gsap.to(".tooltip_circle", { autoAlpha: 1, duration: 0.1 });
+                gsap.to(".tooltip-circle", { autoAlpha: 1, duration: 0.1 });
                 
                 // Animate tooltip text when tooltip_wrap becomes visible (only once)
                 if (!tooltipTextAnimated) {
@@ -507,7 +507,7 @@ function misc() {
             onLeaveBack: () => {
                 // Reset tooltip wrap opacity when scrolling back to top
                 gsap.to(".tooltip_wrap", { autoAlpha: 0, duration: 0.1 });
-                gsap.to(".tooltip_circle", { autoAlpha: 0, duration: 0.1 });
+                gsap.to(".tooltip-circle", { autoAlpha: 0, duration: 0.1 });
                 
                 // Reset revealed circles set and animation flag
                 revealedCircles.clear();
@@ -568,7 +568,7 @@ function misc() {
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
         gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
         gsap.set(".tooltip_wrap", { autoAlpha: 0 });
-        gsap.set(".tooltip_contain", { autoAlpha: 0 });
+        gsap.set(".tooltip-circle", { autoAlpha: 0 });
         
         const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
