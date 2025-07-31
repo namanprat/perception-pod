@@ -315,8 +315,7 @@ function misc() {
     
     // --- TOOLTIP SYSTEM WITH SPLITTEXT ---
     const revealedCircles = new Set();
-    const tooltipContainers = gsap.utils.toArray('.tooltip-circle');
-    let tooltipTextAnimated = false; // Track if initial animation has played
+    const tooltipContainers = gsap.utils.toArray('.tooltip_contain');
     
     // Get tooltip display elements
     const tooltipHeader = document.querySelector('#tooltip-header');
@@ -460,7 +459,7 @@ function misc() {
     }
 
     // Set initial states for tooltip circles
-    gsap.set('.tooltip-circle', { autoAlpha: 0, scale: 0 });
+    gsap.set('.tooltip-circle', { autoAlpha: 0 });
 
     // Scroll-triggered circle reveal animation
     const tooltipRevealTl = gsap.timeline({
@@ -473,16 +472,7 @@ function misc() {
                 const progress = self.progress;
                 
                 gsap.to(".tooltip_wrap", { autoAlpha: 1, duration: 0.1 });
-                gsap.to(".tooltip-circle", { autoAlpha: 1, duration: 0.1 });
-                
-                // Animate tooltip text when tooltip_wrap becomes visible (only once)
-                if (!tooltipTextAnimated) {
-                    tooltipTextAnimated = true;
-                    updateTooltipContent(
-                        tooltipHeader ? tooltipHeader.textContent : 'Default Header',
-                        tooltipBody ? tooltipBody.textContent : 'Default Body'
-                    );
-                }
+                gsap.to(".tooltip_contain", { autoAlpha: 1, duration: 0.1 });
                 
                 const totalTooltips = tooltipContainers.length;
                 const currentTooltipIndex = Math.floor(progress * totalTooltips);
@@ -507,11 +497,10 @@ function misc() {
             onLeaveBack: () => {
                 // Reset tooltip wrap opacity when scrolling back to top
                 gsap.to(".tooltip_wrap", { autoAlpha: 0, duration: 0.1 });
-                gsap.to(".tooltip-circle", { autoAlpha: 0, duration: 0.1 });
+                gsap.to(".tooltip_contain", { autoAlpha: 0, duration: 0.1 });
                 
-                // Reset revealed circles set and animation flag
+                // Reset revealed circles set
                 revealedCircles.clear();
-                tooltipTextAnimated = false;
                 
                 // Hide all circles
                 gsap.set('.tooltip-circle', { autoAlpha: 0, scale: 0 });
@@ -519,7 +508,7 @@ function misc() {
         }
     });
 
-    // Click and hover handlers
+    // Click handlers
     const allTooltipCircles = document.querySelectorAll('.tooltip-circle');
     
     allTooltipCircles.forEach((circle, index) => {
@@ -544,16 +533,6 @@ function misc() {
                 repeat: 1
             });
         });
-        
-        // Add hover event listeners
-        circle.addEventListener('mouseenter', function(event) {
-            // Read data attributes from the hovered element
-            const hoveredHeaderData = this.getAttribute('data-header');
-            const hoveredBodyData = this.getAttribute('data-body');
-            
-            // Update the tooltip content with SplitText animation on hover
-            updateTooltipContent(hoveredHeaderData || 'No Header', hoveredBodyData || 'No Body');
-        });
     });
 
     // --- END OF TOOLTIP SYSTEM ---
@@ -568,7 +547,7 @@ function misc() {
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
         gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
         gsap.set(".tooltip_wrap", { autoAlpha: 0 });
-        gsap.set(".tooltip-circle", { autoAlpha: 0 });
+        gsap.set(".tooltip_contain", { autoAlpha: 0 });
         
         const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
