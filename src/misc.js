@@ -315,62 +315,80 @@ function misc() {
     
     // --- TOOLTIP SYSTEM WITH SPLITTEXT ---
     const revealedCircles = new Set();
-    const tooltipContainers = gsap.utils.toArray('.tooltip_contain');
+    const tooltipCircles = gsap.utils.toArray('.tooltip-circle');
     
     // Get tooltip display elements
     const tooltipHeader = document.querySelector('#tooltip-header');
     const tooltipBody = document.querySelector('#tooltip-body');
     
-    // Variables to store current SplitText instances
+    // Variables to store current SplitText instances and state
     let currentHeaderSplit = null;
     let currentBodySplit = null;
+    let isHovering = false;
+    let activeCircle = null;
     
-    // Make sure tooltip elements are visible
+    // Store original text content for restoration
+    let originalHeaderText = '';
+    let originalBodyText = '';
+    
+    // Initialize and store original content
     if (tooltipHeader) {
+        originalHeaderText = tooltipHeader.textContent || tooltipHeader.innerText || '';
         gsap.set(tooltipHeader, { autoAlpha: 1, display: 'block' });
-        // Create initial SplitText instance
-        currentHeaderSplit = new SplitText(tooltipHeader, {
-            type: "words",
-            wordsClass: "tooltip-word"
-        });
+        
+        // Only create SplitText if there's content
+        if (originalHeaderText.trim()) {
+            currentHeaderSplit = new SplitText(tooltipHeader, {
+                type: "words",
+                wordsClass: "tooltip-word"
+            });
+        }
     }
     
     if (tooltipBody) {
+        originalBodyText = tooltipBody.textContent || tooltipBody.innerText || '';
         gsap.set(tooltipBody, { autoAlpha: 1, display: 'block' });
-        // Create initial SplitText instance for words
-        currentBodySplit = new SplitText(tooltipBody, {
-            type: "words",
-            wordsClass: "tooltip-body-word"
-        });
         
-        // Wrap each word in a container with u-overflow-hidden class (same as body-reveal)
-        currentBodySplit.words.forEach(word => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'u-overflow-hidden';
-            wrapper.style.display = 'inline-block';
-            word.parentNode.insertBefore(wrapper, word);
-            wrapper.appendChild(word);
-        });
-        
-        // Set initial state for body words (same as body-reveal)
-        gsap.set(currentBodySplit.words, { autoAlpha: 1, y: 0 });
+        // Only create SplitText if there's content
+        if (originalBodyText.trim()) {
+            currentBodySplit = new SplitText(tooltipBody, {
+                type: "words",
+                wordsClass: "tooltip-body-word"
+            });
+            
+            // Wrap each word in a container with u-overflow-hidden class (same as body-reveal)
+            currentBodySplit.words.forEach(word => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'u-overflow-hidden';
+                wrapper.style.display = 'inline-block';
+                word.parentNode.insertBefore(wrapper, word);
+                wrapper.appendChild(word);
+            });
+            
+            // Set initial state for body words (same as body-reveal)
+            gsap.set(currentBodySplit.words, { autoAlpha: 1, y: 0 });
+        }
     }
 
     // Enhanced function to update tooltip content with SplitText animations
-    function updateTooltipContent(headerText, bodyText) {
+    function updateTooltipContent(headerText, bodyText, isQuickUpdate = false) {
         const tl = gsap.timeline();
         
         // Store references to old splits
         const oldHeaderSplit = currentHeaderSplit;
         const oldBodySplit = currentBodySplit;
         
+        // Keep original animation speeds
+        const animDuration = 0.4;
+        const staggerAmount = 0.1;
+        
         // Animate out the current text with stagger
         if (oldHeaderSplit && oldHeaderSplit.words && oldHeaderSplit.words.length > 0) {
             tl.to(oldHeaderSplit.words, {
                autoAlpha: 0,
                 y: -50,
-                duration: 0.4,
-                stagger: { amount: 0.1, from: "end" },
+                duration: animDuration,
+                stagger: { amount: staggerAmount, from: "end" },
                 ease: "power2.in"
             });
         }
@@ -379,8 +397,8 @@ function misc() {
             tl.to(oldBodySplit.words, {
                 autoAlpha: 0,
                 y: -50,
-                duration: 0.4,
-                stagger: { amount: 0.1, from: "end" },
+                duration: animDuration,
+                stagger: { amount: staggerAmount, from: "end" },
                 ease: "power2.in"
             }, "-=0.15");
         }
@@ -456,6 +474,103 @@ function misc() {
                 });
             }
         });
+        
+        return tl;
+    }
+
+    // Function to reset tooltip info to initial state
+    function resetTooltipInfo() {
+        // Revert any existing splits
+        if (currentHeaderSplit) {
+            currentHeaderSplit.revert();
+            currentHeaderSplit = null;
+        }
+        if (currentBodySplit) {
+            currentBodySplit.revert();
+            currentBodySplit = null;
+        }
+        
+        // Reset text content to original state and hide
+        if (tooltipHeader) {
+            tooltipHeader.textContent = originalHeaderText;
+            gsap.set(tooltipHeader, { autoAlpha: 0 });
+        }
+        if (tooltipBody) {
+            tooltipBody.textContent = originalBodyText;
+            gsap.set(tooltipBody, { autoAlpha: 0 });
+        }
+        
+        // Reset state
+        isHovering = false;
+        activeCircle = null;
+    }
+
+    // Function to restore original tooltip content with animation
+    function restoreOriginalTooltip() {
+        // Only restore if no active circle is set
+        if (activeCircle) return;
+        
+        // Reset splits first
+        if (currentHeaderSplit) {
+            currentHeaderSplit.revert();
+            currentHeaderSplit = null;
+        }
+        if (currentBodySplit) {
+            currentBodySplit.revert();
+            currentBodySplit = null;
+        }
+        
+        // Restore original text content
+        if (tooltipHeader && originalHeaderText.trim()) {
+            tooltipHeader.textContent = originalHeaderText;
+            gsap.set(tooltipHeader, { autoAlpha: 1 });
+            
+            // Recreate SplitText for original content
+            currentHeaderSplit = new SplitText(tooltipHeader, {
+                type: "words",
+                wordsClass: "tooltip-word"
+            });
+            
+            // Set initial state and animate in
+            gsap.set(currentHeaderSplit.words, { autoAlpha: 0, y: 20 });
+            gsap.to(currentHeaderSplit.words, {
+                autoAlpha: 1,
+                y: 0,
+                duration: 0.6,
+                stagger: { amount: 0.3 },
+                ease: "power3.out"
+            });
+        }
+        
+        if (tooltipBody && originalBodyText.trim()) {
+            tooltipBody.textContent = originalBodyText;
+            gsap.set(tooltipBody, { autoAlpha: 1 });
+            
+            // Recreate SplitText for original content
+            currentBodySplit = new SplitText(tooltipBody, {
+                type: "words",
+                wordsClass: "tooltip-body-word"
+            });
+            
+            // Wrap each word in overflow containers
+            currentBodySplit.words.forEach(word => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'u-overflow-hidden';
+                wrapper.style.display = 'inline-block';
+                word.parentNode.insertBefore(wrapper, word);
+                wrapper.appendChild(word);
+            });
+            
+            // Set initial state and animate in
+            gsap.set(currentBodySplit.words, { autoAlpha: 0, y: 100 });
+            gsap.to(currentBodySplit.words, {
+                autoAlpha: 1,
+                y: 0,
+                duration: 1.2,
+                stagger: { amount: 0.4 },
+                ease: "power4.inOut"
+            });
+        }
     }
 
     // Set initial states for tooltip circles
@@ -472,19 +587,21 @@ function misc() {
                 const progress = self.progress;
                 
                 gsap.to(".tooltip_wrap", { autoAlpha: 1, duration: 0.1 });
-                gsap.to(".tooltip_contain", { autoAlpha: 1, duration: 0.1 });
                 
-                const totalTooltips = tooltipContainers.length;
+                // Restore original tooltip content when entering scrub section
+                if (progress > 0) {
+                    restoreOriginalTooltip();
+                }
+                
+                const totalTooltips = tooltipCircles.length;
                 const currentTooltipIndex = Math.floor(progress * totalTooltips);
                 
-                tooltipContainers.forEach((container, index) => {
+                tooltipCircles.forEach((circle, index) => {
                     if (index <= currentTooltipIndex) {
-                        const tooltipCircle = container.querySelector('.tooltip-circle');
-                        
-                        if (tooltipCircle && !revealedCircles.has(tooltipCircle)) {
-                            revealedCircles.add(tooltipCircle);
+                        if (!revealedCircles.has(circle)) {
+                            revealedCircles.add(circle);
                             
-                            gsap.to(tooltipCircle, {
+                            gsap.to(circle, {
                                 autoAlpha: 1,
                                 duration: 0.6,
                                 ease: "back.out(1.7)"
@@ -496,36 +613,140 @@ function misc() {
             onLeaveBack: () => {
                 // Reset tooltip wrap opacity when scrolling back to top
                 gsap.to(".tooltip_wrap", { autoAlpha: 0, duration: 0.1 });
-                gsap.to(".tooltip_contain", { autoAlpha: 0, duration: 0.1 });
                 
                 // Reset revealed circles set
                 revealedCircles.clear();
                 
                 // Hide all circles
                 gsap.set('.tooltip-circle', { autoAlpha: 0});
+                
+                // Reset tooltip info content and animations
+                resetTooltipInfo();
             }
         }
     });
 
-    // Click handlers
-    const allTooltipCircles = document.querySelectorAll('.tooltip-circle');
-    
-    allTooltipCircles.forEach((circle, index) => {
-        const headerData = circle.getAttribute('data-header');
-        const bodyData = circle.getAttribute('data-body');
+    // Add hover and click effects for tooltip circles
+    tooltipCircles.forEach((circle, index) => {
+        let hoverTimeout = null;
         
-        // Add click event listener
+        // Hover enter effect
+        circle.addEventListener('mouseenter', function() {
+            // Clear any existing timeout
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            
+            // Visual hover effect
+            gsap.to(this, {
+                scale: 1.3,
+                duration: 0.3,
+                ease: "back.out(1.7)"
+            });
+            
+            // Reduce opacity of other circles
+            tooltipCircles.forEach(otherCircle => {
+                if (otherCircle !== this) {
+                    gsap.to(otherCircle, {
+                        opacity: 0.5,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                }
+            });
+            
+            // Set hovering state
+            isHovering = true;
+            
+            // Show hover text with slight delay for better UX
+            hoverTimeout = setTimeout(() => {
+                if (isHovering) { // Check if still hovering
+                    const hoverHeaderData = this.getAttribute('data-hover-header');
+                    const hoverBodyData = this.getAttribute('data-hover-body');
+                    
+                    // Use hover data if available, otherwise use click data as fallback
+                    const headerText = hoverHeaderData || this.getAttribute('data-header') || `Preview ${index + 1}`;
+                    const bodyText = hoverBodyData || this.getAttribute('data-body') || `Hover preview for circle ${index + 1}. Click to see full content.`;
+                    
+                    updateTooltipContent(headerText, bodyText);
+                }
+            }, 150); // Small delay to prevent flickering on quick mouse movements
+        });
+        
+        // Hover leave effect
+        circle.addEventListener('mouseleave', function() {
+            // Clear timeout if hovering stopped before content was shown
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            
+            // Visual hover effect
+            gsap.to(this, {
+                scale: 1,
+                duration: 0.4,
+                ease: "elastic.out(1, 0.6)"
+            });
+            
+            // Restore opacity of all circles
+            gsap.to(tooltipCircles, {
+                opacity: 1,
+                duration: 0.3,
+                ease: "power2.out"
+            });
+            
+            // Reset hovering state
+            isHovering = false;
+            
+            // Only restore content if no circle is currently active
+            setTimeout(() => {
+                if (!isHovering && !activeCircle) {
+                    restoreOriginalTooltip();
+                }
+            }, 100);
+        });
+        
+        // Click event with data attributes
         circle.addEventListener('click', function(event) {
+            // Clear any hover timeout
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            
+            // Reset hovering state
+            isHovering = false;
+            
+            // Set this circle as active
+            activeCircle = this;
+            
+            // Remove visual active state from all circles
+            tooltipCircles.forEach(c => c.classList.remove('tooltip-active'));
+            
+            // Add visual active state to clicked circle
+            this.classList.add('tooltip-active');
+            
+            // Restore opacity of all circles
+            gsap.to(tooltipCircles, {
+                opacity: 1,
+                duration: 0.3,
+                ease: "power2.out"
+            });
+            
             // Read data attributes from the clicked element
             const clickedHeaderData = this.getAttribute('data-header');
             const clickedBodyData = this.getAttribute('data-body');
             
             // Update the tooltip content with SplitText animation
-            updateTooltipContent(clickedHeaderData || 'No Header', clickedBodyData || 'No Body');
+            updateTooltipContent(
+                clickedHeaderData || `Content ${index + 1}`, 
+                clickedBodyData || `This is the main content for circle ${index + 1}. You clicked to activate this.`
+            );
             
             // Scale animation on click
             gsap.to(this, {
-                scale: 1.2,
+                scale: 1.5,
                 duration: 0.1,
                 ease: "power2.out",
                 yoyo: true,
@@ -546,7 +767,6 @@ function misc() {
         gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
         gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
         gsap.set(".tooltip_wrap", { autoAlpha: 0 });
-        gsap.set(".tooltip_contain", { autoAlpha: 0 });
         
         const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
