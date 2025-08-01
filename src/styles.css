@@ -4,9 +4,10 @@
 body {
   overflow: hidden;
 }
-  li {
-    display: list-item !important;
-  }
+.pseudo-bg {
+  visibility: hidden;
+}
+
   .u-overflow {
     overflow: hidden;
     width: fit-content;
