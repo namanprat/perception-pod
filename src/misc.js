@@ -611,8 +611,12 @@ function misc() {
                 });
             },
             onLeaveBack: () => {
-                // Reset tooltip wrap opacity when scrolling back to top
-                gsap.to(".tooltip_wrap", { autoAlpha: 0, duration: 0.1 });
+                // Reset tooltip wrap opacity when scrolling back to top with smoother, slower transition
+                gsap.to(".tooltip_wrap", { 
+                    autoAlpha: 0, 
+                    duration: 0.8,
+                    ease: "power3.out"
+                });
                 
                 // Reset revealed circles set
                 revealedCircles.clear();
@@ -629,7 +633,7 @@ function misc() {
     // Add hover and click effects for tooltip circles
     tooltipCircles.forEach((circle, index) => {
         
-        // Hover enter effect
+        // Hover enter effect (visual only)
         circle.addEventListener('mouseenter', function() {
             // Visual hover effect (works on both desktop and mobile)
             gsap.to(this, {
@@ -648,31 +652,9 @@ function misc() {
                     });
                 }
             });
-            
-            // Only change text on desktop
-            if (!isTouchDevice) {
-                // Set hovering state
-                isHovering = true;
-                
-                // Clear any active circle state since we're now hovering
-                activeCircle = null;
-                
-                // Remove active class from all circles
-                tooltipCircles.forEach(c => c.classList.remove('tooltip-active'));
-                
-                // Show hover text immediately on desktop
-                const hoverHeaderData = this.getAttribute('data-hover-header');
-                const hoverBodyData = this.getAttribute('data-hover-body');
-                
-                // Use hover data if available, otherwise use click data as fallback
-                const headerText = hoverHeaderData || this.getAttribute('data-header') || `Preview ${index + 1}`;
-                const bodyText = hoverBodyData || this.getAttribute('data-body') || `Content for circle ${index + 1}. This text will stay until you hover another circle.`;
-                
-                updateTooltipContent(headerText, bodyText);
-            }
         });
         
-        // Hover leave effect
+        // Hover leave effect (visual only)
         circle.addEventListener('mouseleave', function() {
             // Visual hover effect (works on both desktop and mobile)
             gsap.to(this, {
@@ -687,21 +669,10 @@ function misc() {
                 duration: 0.3,
                 ease: "power2.out"
             });
-            
-            // On desktop, we DON'T reset the text on mouse leave
-            // Text stays until hovering another circle
-            if (!isTouchDevice) {
-                // Keep the text but reset hovering state
-                isHovering = false;
-                // Don't restore original content - let it persist
-            }
         });
         
         // Click event with data attributes
         circle.addEventListener('click', function(event) {
-            // Reset hovering state
-            isHovering = false;
-            
             // Set this circle as active
             activeCircle = this;
             
@@ -742,9 +713,13 @@ function misc() {
     // --- END OF TOOLTIP SYSTEM ---
 
     document.addEventListener("DOMContentLoaded", function () {
-        // DETECT TOUCH DEVICES FOR OPTIMIZATIONS
+        // DETECT TOUCH DEVICES FOR OPTIMIZATIONS WITH BREAKPOINT
         const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
         const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        
+        // Add breakpoint check - consider devices under 1024px as mobile/tablet
+        const isMobileBreakpoint = window.innerWidth < 1024;
+        const shouldUseTouchBehavior = isTouchDevice || isMobileBreakpoint;
         
         // INITIAL STATES
         gsap.set("#nav", { yPercent: -100 });
@@ -768,7 +743,7 @@ function misc() {
         const magneticElements = document.querySelectorAll('.is-magnetic');
         
         // --- DISABLE MAGNETIC EFFECT ON TOUCH DEVICES ---
-        if (isDesktop) {
+        if (isDesktop && !isMobileBreakpoint) {
             magneticElements.forEach(elem => {
                 elem.addEventListener('mousemove', (e) => {
                     const rect = elem.getBoundingClientRect();
@@ -934,7 +909,7 @@ function misc() {
                     ease: "power3.inOut",
                     onStart: () => {
                         if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
-                        if (!isTouchDevice) {
+                        if (!isTouchDevice && !isMobileBreakpoint) {
                             gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
@@ -952,7 +927,7 @@ function misc() {
                         }
                     },
                     onComplete: () => {
-                        if (isDesktop && !isFlipped && highlight) {
+                        if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint) {
                             if (card.matches(":hover")) {
                                 gsap.to(highlight, { opacity: 1, duration: 0.2 });
                             }
@@ -961,7 +936,7 @@ function misc() {
                 });
             });
 
-            if (isDesktop) {
+            if (isDesktop && !isMobileBreakpoint) {
                 let leaveTween = null;
                 
                 card.addEventListener("mouseenter", () => {
@@ -1000,7 +975,7 @@ function misc() {
                 });
                 
                 card.addEventListener("mousemove", (e) => {
-                    if (gsap.isTweening(cardInner) || isTouchDevice) return;
+                    if (gsap.isTweening(cardInner) || shouldUseTouchBehavior) return;
                     
                     const now = performance.now();
                     if (now - lastTime < throttleDelay) return;
