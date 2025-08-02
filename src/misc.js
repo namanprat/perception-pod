@@ -65,7 +65,7 @@ function scrub() {
     
     // Generate image URLs array
     const imageUrls = [];
-    for (let i = 0; i <= 200; i++) {
+    for (let i = 0; i <= 114; i++) {
         imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
     }
     
@@ -371,7 +371,7 @@ function misc() {
     }
 
     // Enhanced function to update tooltip content with SplitText animations
-    function updateTooltipContent(headerText, bodyText, isQuickUpdate = false) {
+    function updateTooltipContent(headerText, bodyText) {
         const tl = gsap.timeline();
         
         // Store references to old splits
@@ -575,6 +575,53 @@ function misc() {
 
     // Set initial states for tooltip circles
     gsap.set('.tooltip-circle', { autoAlpha: 0 });
+    
+    // Track if pulse animation has been added
+    let pulseAnimationAdded = false;
+    
+    // Add radial pulse animation to tooltip circles
+    function addRadialPulseToCircles() {
+        if (pulseAnimationAdded) return; // Prevent multiple calls
+        pulseAnimationAdded = true;
+        
+        tooltipCircles.forEach((circle) => {
+            // Create pseudo element for radial pulse
+            const pulseElement = document.createElement('div');
+            pulseElement.className = 'tooltip-circle-pulse';
+            
+            // Style the pulse element
+            Object.assign(pulseElement.style, {
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+                transform: 'translate(-50%, -50%) scale(0)',
+                pointerEvents: 'none',
+                zIndex: '-1'
+            });
+            
+            // Make sure parent has relative positioning
+            if (getComputedStyle(circle).position === 'static') {
+                circle.style.position = 'relative';
+            }
+            
+            // Add pulse element to circle
+            circle.appendChild(pulseElement);
+            
+            // Create infinite pulse animation
+            gsap.to(pulseElement, {
+                scale: 2,
+                opacity: 0,
+                duration: 2,
+                ease: "power2.out",
+                repeat: -1,
+                repeatDelay: 0.5
+            });
+        });
+    }
 
     // Scroll-triggered circle reveal animation
     const tooltipRevealTl = gsap.timeline({
@@ -609,6 +656,11 @@ function misc() {
                         }
                     }
                 });
+                
+                // Add pulse animation to all revealed circles
+                if (progress > 0.1) { // Only add pulse after some circles are visible
+                    addRadialPulseToCircles();
+                }
             },
             onLeaveBack: () => {
                 // Reset tooltip wrap opacity when scrolling back to top with smoother, slower transition
@@ -623,6 +675,9 @@ function misc() {
                 
                 // Hide all circles
                 gsap.set('.tooltip-circle', { autoAlpha: 0});
+                
+                // Reset pulse animation flag
+                pulseAnimationAdded = false;
                 
                 // Reset tooltip info content and animations
                 resetTooltipInfo();
@@ -882,8 +937,9 @@ function misc() {
             setInterval(getTime, 1000);
         }
 
-        // Card animations (optimized)
+        // Card animations (optimized) with single flip logic
         const cards = document.querySelectorAll(".card_wrap");
+        let currentlyFlippedCard = null;
 
         cards.forEach((card) => {
             const cardInner = card.querySelector(".card_inner");
@@ -902,14 +958,38 @@ function misc() {
                     animationId = null;
                 }
                 
+                // If another card is currently flipped, reset it first
+                if (currentlyFlippedCard && currentlyFlippedCard !== card) {
+                    const otherCardInner = currentlyFlippedCard.querySelector(".card_inner");
+                    if (otherCardInner) {
+                        gsap.to(otherCardInner, {
+                            rotationY: 0,
+                            duration: 0.7,
+                            ease: "power3.inOut"
+                        });
+                        // Reset the flipped state of the other card
+                        currentlyFlippedCard.isFlipped = false;
+                    }
+                }
+                
                 isFlipped = !isFlipped;
+                
+                // Update currently flipped card reference
+                if (isFlipped) {
+                    currentlyFlippedCard = card;
+                    card.isFlipped = true;
+                } else {
+                    currentlyFlippedCard = null;
+                    card.isFlipped = false;
+                }
+                
                 gsap.to(cardInner, {
                     rotationY: isFlipped ? 180 : 0,
                     duration: 0.7,
                     ease: "power3.inOut",
                     onStart: () => {
                         if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
-                        if (!isTouchDevice && !isMobileBreakpoint) {
+                        if (!shouldUseTouchBehavior) {
                             gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
