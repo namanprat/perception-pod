@@ -162,15 +162,15 @@ textarea,
     /* Enhanced gradient for better visibility */
     background: radial-gradient(
         circle, 
-        rgba(249, 255, 244, 0.8) 0%, 
-        rgba(249, 255, 244, 0.4) 30%, 
-        rgba(249, 255, 244, 0.2) 60%, 
-        rgba(249, 255, 244, 0.05) 80%, 
+        rgba(224, 230, 220, 0.8) 0%, 
+        rgba(224, 230, 220, 0.4) 30%, 
+        rgba(224, 230, 220, 0.2) 60%, 
+        rgba(224, 230, 220, 0.05) 80%, 
         transparent 100%
     );
     
     /* Add subtle border for definition */
-    border: 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.3);
+    border: 2px 2px 2px 2px 2px solid rgba(224, 230, 220, 0.3);
     
     /* CSS Animation as fallback/enhancement */
     animation: pulse-expand 3s infinite;
@@ -287,13 +287,13 @@ textarea,
     .tooltip-circle-pulse {
         background: radial-gradient(
             circle, 
-            rgba(249, 255, 244, 0.9) 0%, 
-            rgba(249, 255, 244, 0.5) 30%, 
-            rgba(249, 255, 244, 0.2) 60%, 
-            rgba(249, 255, 244, 0.05) 80%, 
+            rgba(224, 230, 220, 0.9) 0%, 
+            rgba(224, 230, 220, 0.5) 30%, 
+            rgba(224, 230, 220, 0.2) 60%, 
+            rgba(224, 230, 220, 0.05) 80%, 
             transparent 100%
         );
-        border: 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.4);
+        border: 2px 2px 2px 2px 2px solid rgba(224, 230, 220, 0.4);
     }
 }
 
@@ -302,11 +302,11 @@ textarea,
     .tooltip-circle-pulse {
         background: radial-gradient(
             circle, 
-            rgba(249, 255, 244, 1) 0%, 
-            rgba(249, 255, 244, 0.7) 30%, 
-            rgba(249, 255, 244, 0.3) 60%, 
+            rgba(224, 230, 220, 1) 0%, 
+            rgba(224, 230, 220, 0.7) 30%, 
+            rgba(224, 230, 220, 0.3) 60%, 
             transparent 100%
         );
-        border: 2px 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.8);
+        border: 2px 2px 2px 2px 2px 2px solid rgba(224, 230, 220, 0.8);
     }
 }
