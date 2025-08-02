@@ -138,3 +138,175 @@ textarea,
   opacity: var(--o);
 }
 
+/* ===== TOOLTIP CIRCLE PULSE ANIMATION CSS ===== */
+
+/* Ensure tooltip circles have proper positioning context */
+.tooltip-circle {
+    position: relative !important;
+    overflow: visible !important;
+    z-index: 1;
+}
+
+/* Base pulse element styling */
+.tooltip-circle-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    transform: translate(-50%, -50%);
+    
+    /* Enhanced gradient for better visibility */
+    background: radial-gradient(
+        circle, 
+        rgba(255, 255, 255, 0.8) 0%, 
+        rgba(255, 255, 255, 0.4) 30%, 
+        rgba(255, 255, 255, 0.2) 60%, 
+        rgba(255, 255, 255, 0.05) 80%, 
+        transparent 100%
+    );
+    
+    /* Add subtle border for definition */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    /* CSS Animation as fallback/enhancement */
+    animation: pulse-expand 3s infinite;
+}
+
+/* Alternative pulse colors for different themes */
+.tooltip-circle-pulse.pulse-blue {
+    background: radial-gradient(
+        circle, 
+        rgba(59, 130, 246, 0.6) 0%, 
+        rgba(59, 130, 246, 0.3) 40%, 
+        rgba(59, 130, 246, 0.1) 70%, 
+        transparent 100%
+    );
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.tooltip-circle-pulse.pulse-green {
+    background: radial-gradient(
+        circle, 
+        rgba(34, 197, 94, 0.6) 0%, 
+        rgba(34, 197, 94, 0.3) 40%, 
+        rgba(34, 197, 94, 0.1) 70%, 
+        transparent 100%
+    );
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+/* CSS keyframe animation for pulse effect */
+@keyframes pulse-expand {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0.4;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Secondary pulse animation (delayed) */
+@keyframes pulse-expand-delayed {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.3;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2.2);
+        opacity: 0;
+    }
+}
+
+/* Ensure tooltip wrapper allows overflow for pulse */
+.tooltip_wrap {
+    overflow: visible !important;
+}
+
+.tooltip_contain {
+    overflow: visible !important;
+}
+
+/* Enhanced tooltip circle base styles */
+.tooltip-circle {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    /* Ensure it's above the pulse */
+    z-index: 2;
+    position: relative;
+}
+
+/* Hover state enhancement */
+.tooltip-circle:hover {
+    z-index: 3;
+}
+
+/* Active state styling */
+.tooltip-circle.tooltip-active {
+    z-index: 4;
+}
+
+/* Hide pulse on hover to prevent interference */
+.tooltip-circle:hover .tooltip-circle-pulse {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease;
+}
+
+/* Show pulse when not hovering */
+.tooltip-circle:not(:hover) .tooltip-circle-pulse {
+    transition: opacity 0.3s ease;
+}
+
+/* Media query for reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .tooltip-circle-pulse {
+        animation: none;
+    }
+    
+    .tooltip-circle-pulse::before {
+        animation: none;
+    }
+}
+
+/* Dark theme variant */
+@media (prefers-color-scheme: dark) {
+    .tooltip-circle-pulse {
+        background: radial-gradient(
+            circle, 
+            rgba(255, 255, 255, 0.9) 0%, 
+            rgba(255, 255, 255, 0.5) 30%, 
+            rgba(255, 255, 255, 0.2) 60%, 
+            rgba(255, 255, 255, 0.05) 80%, 
+            transparent 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .tooltip-circle-pulse {
+        background: radial-gradient(
+            circle, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.7) 30%, 
+            rgba(255, 255, 255, 0.3) 60%, 
+            transparent 100%
+        );
+        border: 2px solid rgba(255, 255, 255, 0.8);
+    }
+}

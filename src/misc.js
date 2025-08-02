@@ -589,36 +589,56 @@ function misc() {
             const pulseElement = document.createElement('div');
             pulseElement.className = 'tooltip-circle-pulse';
             
-            // Style the pulse element
+            // Style the pulse element with more visible styling
             Object.assign(pulseElement.style, {
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '100%',
-                height: '100%',
+                width: '120%',
+                height: '120%',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-                transform: 'translate(-50%, -50%) scale(0)',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                transform: 'translate(-50%, -50%) scale(0.8)',
                 pointerEvents: 'none',
-                zIndex: '-1'
+                zIndex: '10',
+                opacity: '0.8'
             });
             
-            // Make sure parent has relative positioning
-            if (getComputedStyle(circle).position === 'static') {
-                circle.style.position = 'relative';
-            }
+            // Make sure parent has relative positioning and overflow visible
+            circle.style.position = 'relative';
+            circle.style.overflow = 'visible';
             
             // Add pulse element to circle
             circle.appendChild(pulseElement);
             
-            // Create infinite pulse animation
+            // Create infinite pulse animation with more dramatic effect
+            gsap.set(pulseElement, { scale: 0.8, opacity: 0.8 });
             gsap.to(pulseElement, {
-                scale: 2,
+                scale: 2.5,
                 opacity: 0,
                 duration: 2,
                 ease: "power2.out",
                 repeat: -1,
-                repeatDelay: 0.5
+                repeatDelay: 1,
+                yoyo: false
+            });
+            
+            // Add a secondary pulse for more visual impact
+            const pulseElement2 = pulseElement.cloneNode(true);
+            pulseElement2.style.animationDelay = '1s';
+            circle.appendChild(pulseElement2);
+            
+            gsap.set(pulseElement2, { scale: 0.8, opacity: 0.6 });
+            gsap.to(pulseElement2, {
+                scale: 2.2,
+                opacity: 0,
+                duration: 2,
+                ease: "power2.out",
+                repeat: -1,
+                repeatDelay: 1,
+                delay: 1,
+                yoyo: false
             });
         });
     }
