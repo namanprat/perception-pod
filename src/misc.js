@@ -65,7 +65,7 @@ function scrub() {
     
     // Generate image URLs array
     const imageUrls = [];
-    for (let i = 0; i <= 114; i++) {
+    for (let i = 0; i <= 200; i++) {
         imageUrls.push(`https://perception-pod.netlify.app/${i}.png`);
     }
     
