@@ -50,7 +50,7 @@ textarea,
 .form_wrap input {  
   box-sizing: border-box; 
     resize: none;
-   border: none;
+   border: 1px 1px 1px 1px none;
   border-bottom: 1.5px solid rgba(61, 57, 46, 0.1) !important;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -162,15 +162,15 @@ textarea,
     /* Enhanced gradient for better visibility */
     background: radial-gradient(
         circle, 
-        rgba(255, 255, 255, 0.8) 0%, 
-        rgba(255, 255, 255, 0.4) 30%, 
-        rgba(255, 255, 255, 0.2) 60%, 
-        rgba(255, 255, 255, 0.05) 80%, 
+        rgba(249, 255, 244, 0.8) 0%, 
+        rgba(249, 255, 244, 0.4) 30%, 
+        rgba(249, 255, 244, 0.2) 60%, 
+        rgba(249, 255, 244, 0.05) 80%, 
         transparent 100%
     );
     
     /* Add subtle border for definition */
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.3);
     
     /* CSS Animation as fallback/enhancement */
     animation: pulse-expand 3s infinite;
@@ -185,7 +185,7 @@ textarea,
         rgba(59, 130, 246, 0.1) 70%, 
         transparent 100%
     );
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    border: 2px 2px 2px 2px 2px solid rgba(59, 130, 246, 0.4);
 }
 
 .tooltip-circle-pulse.pulse-green {
@@ -196,7 +196,7 @@ textarea,
         rgba(34, 197, 94, 0.1) 70%, 
         transparent 100%
     );
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    border: 2px 2px 2px 2px 2px solid rgba(34, 197, 94, 0.4);
 }
 
 /* CSS keyframe animation for pulse effect */
@@ -287,13 +287,13 @@ textarea,
     .tooltip-circle-pulse {
         background: radial-gradient(
             circle, 
-            rgba(255, 255, 255, 0.9) 0%, 
-            rgba(255, 255, 255, 0.5) 30%, 
-            rgba(255, 255, 255, 0.2) 60%, 
-            rgba(255, 255, 255, 0.05) 80%, 
+            rgba(249, 255, 244, 0.9) 0%, 
+            rgba(249, 255, 244, 0.5) 30%, 
+            rgba(249, 255, 244, 0.2) 60%, 
+            rgba(249, 255, 244, 0.05) 80%, 
             transparent 100%
         );
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.4);
     }
 }
 
@@ -302,11 +302,11 @@ textarea,
     .tooltip-circle-pulse {
         background: radial-gradient(
             circle, 
-            rgba(255, 255, 255, 1) 0%, 
-            rgba(255, 255, 255, 0.7) 30%, 
-            rgba(255, 255, 255, 0.3) 60%, 
+            rgba(249, 255, 244, 1) 0%, 
+            rgba(249, 255, 244, 0.7) 30%, 
+            rgba(249, 255, 244, 0.3) 60%, 
             transparent 100%
         );
-        border: 2px solid rgba(255, 255, 255, 0.8);
+        border: 2px 2px 2px 2px 2px 2px solid rgba(249, 255, 244, 0.8);
     }
 }
