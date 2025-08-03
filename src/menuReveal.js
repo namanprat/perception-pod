@@ -55,6 +55,9 @@ function menu() {
          document.querySelector('.contact-close').addEventListener('click', () => {
              openTl.reverse();
          });
+         document.querySelector('.contact-arrow').addEventListener('click', () => {
+             openTl.reverse();
+         });
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && openTl.progress() > 0 && !openTl.reversed()) {
