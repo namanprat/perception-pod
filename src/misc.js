@@ -3,6 +3,10 @@ gsap.registerPlugin(ScrollTrigger, SplitText, ScrollToPlugin, Flip);
 // Global variable to store the split text instance
 let headerSplitText = null;
 
+// Safari-specific detection
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
 // Global function to handle hero reveal animations
 function playHeroReveal() {
     // Hero reveal timeline
@@ -14,6 +18,7 @@ function playHeroReveal() {
         opacity: 1,
         duration: 1.2,
         ease: "power3.out",
+        force3D: true, // Safari performance
         stagger: {
             amount: 0.3
         }
@@ -26,6 +31,7 @@ function playHeroReveal() {
         opacity: 1,
         duration: 0.8,
         ease: "power3.out",
+        force3D: true, // Safari performance
         stagger: 0.1
     }, "-=0.8");
     
@@ -39,6 +45,7 @@ function playHeroReveal() {
                 y: 0,
                 duration: 0.8,
                 ease: "power3.out",
+                force3D: true, // Safari performance
                 stagger: 0.05 // Small stagger within each line
             }, index * 0.1); // Stagger between lines
         });
@@ -223,11 +230,20 @@ function scrub() {
         ctx = canvas.getContext('2d');
     }
     
-    // Set canvas size with safety check
+    // Set canvas size with safety check and Safari optimization
     function resizeCanvas() {
         if (canvas && ctx) {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // Safari-specific canvas sizing
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            // Scale context for high DPI displays (Safari)
+            ctx.scale(dpr, dpr);
         }
     }
     
@@ -240,40 +256,57 @@ function scrub() {
     
     window.addEventListener('resize', resizeCanvas);
     
-    // Draw current frame
+    // Draw current frame with Safari optimizations
     function drawFrame() {
         const currentFrame = Math.floor(imageSequence.frame);
         const img = imageSequence.images[currentFrame];
         
         if (img && img.complete && ctx) {
+            // Get actual canvas dimensions for Safari
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const canvasWidth = rect.width;
+            const canvasHeight = rect.height;
+            
             // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             
             // Calculate scaling to cover entire frame height (like CSS object-fit: cover)
-            const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+            const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
             const scaledWidth = img.width * scale;
             const scaledHeight = img.height * scale;
             
             // Center the image
-            const x = (canvas.width - scaledWidth) / 2;
-            const y = (canvas.height - scaledHeight) / 2;
+            const x = (canvasWidth - scaledWidth) / 2;
+            const y = (canvasHeight - scaledHeight) / 2;
             
-            // Draw image
-            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            // Safari-friendly image drawing
+            try {
+                ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            } catch (error) {
+                console.warn('Safari canvas drawing error:', error);
+                return;
+            }
             
             // Create fade to transparent gradient for bottom 10vh
-            const fadeHeight = canvas.height * 0.1; // 10vh
-            const fadeStartY = canvas.height - fadeHeight;
+            const fadeHeight = canvasHeight * 0.1; // 10vh
+            const fadeStartY = canvasHeight - fadeHeight;
             
-            // Create gradient from transparent to opaque black
-            const gradient = ctx.createLinearGradient(0, fadeStartY, 0, canvas.height);
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent at top of fade
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 1)'); // Opaque black at bottom
+            // Safari-compatible gradient creation
+            let gradient;
+            try {
+                gradient = ctx.createLinearGradient(0, fadeStartY, 0, canvasHeight);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent at top of fade
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 1)'); // Opaque black at bottom
+            } catch (error) {
+                console.warn('Safari gradient error:', error);
+                return;
+            }
             
-            // Apply gradient as mask using composite operation
+            // Apply gradient as mask using composite operation (Safari compatible)
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, fadeStartY, canvas.width, fadeHeight);
+            ctx.fillRect(0, fadeStartY, canvasWidth, fadeHeight);
             
             // Reset composite operation
             ctx.globalCompositeOperation = 'source-over';
@@ -370,7 +403,7 @@ function misc() {
         }
     }
 
-    // Enhanced function to update tooltip content with SplitText animations
+    // Enhanced function to update tooltip content with SplitText animations (Safari optimized)
     function updateTooltipContent(headerText, bodyText) {
         const tl = gsap.timeline();
         
@@ -389,7 +422,8 @@ function misc() {
                 y: -50,
                 duration: animDuration,
                 stagger: { amount: staggerAmount, from: "end" },
-                ease: "power2.in"
+                ease: "power2.in",
+                force3D: true // Safari performance
             });
         }
         
@@ -399,7 +433,8 @@ function misc() {
                 y: -50,
                 duration: animDuration,
                 stagger: { amount: staggerAmount, from: "end" },
-                ease: "power2.in"
+                ease: "power2.in",
+                force3D: true // Safari performance
             }, "-=0.15");
         }
         
@@ -421,7 +456,8 @@ function misc() {
                 if (currentHeaderSplit.words && currentHeaderSplit.words.length > 0) {
                     gsap.set(currentHeaderSplit.words, {
                         y: 15,
-                        opacity: 0
+                        opacity: 0,
+                        force3D: true // Safari performance
                     });
                 }
             }
@@ -447,7 +483,8 @@ function misc() {
                 if (currentBodySplit.words && currentBodySplit.words.length > 0) {
                     gsap.set(currentBodySplit.words, {
                         autoAlpha: 0,
-                        y: 100
+                        y: 100,
+                        force3D: true // Safari performance
                     });
                 }
             }
@@ -460,6 +497,7 @@ function misc() {
                         duration: 0.8,
                         stagger: { amount: 0.4 },
                         ease: "power3.out",
+                        force3D: true // Safari performance
                 });
             }
             
@@ -470,7 +508,8 @@ function misc() {
                     y: 0,
                     duration: 1.5,
                     stagger: {amount: 0.5},
-                    ease: "power4.inOut"
+                    ease: "power4.inOut",
+                    force3D: true // Safari performance
                 });
             }
         });
@@ -579,41 +618,65 @@ function misc() {
     // Track if pulse animation has been added
     let pulseAnimationAdded = false;
     
-    // Add radial pulse animation to tooltip circles
+    // Add radial pulse animation to tooltip circles (Safari optimized)
     function addRadialPulseToCircles() {
         if (pulseAnimationAdded) return; // Prevent multiple calls
         pulseAnimationAdded = true;
         
-        tooltipCircles.forEach((circle) => {
+        tooltipCircles.forEach((circle, index) => {
             // Create pseudo element for radial pulse
             const pulseElement = document.createElement('div');
             pulseElement.className = 'tooltip-circle-pulse';
             
-            // Style the pulse element with more visible styling
-            Object.assign(pulseElement.style, {
+            // Safari-friendly styling with fallbacks
+            const pulseStyles = {
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 width: '120%',
                 height: '120%',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                transform: 'translate(-50%, -50%) scale(0.8)',
                 pointerEvents: 'none',
                 zIndex: '10',
-                opacity: '0.8'
-            });
+                opacity: '0.8',
+                // Safari-compatible transform
+                transform: 'translate(-50%, -50%) scale(0.8) translateZ(0)',
+                // Webkit prefixes for Safari
+                WebkitTransform: 'translate(-50%, -50%) scale(0.8) translateZ(0)',
+                WebkitBorderRadius: '50%',
+                // Enhanced background for Safari
+                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
+                WebkitBackground: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                // Safari performance optimization
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                WebkitPerspective: '1000px',
+                perspective: '1000px'
+            };
+            
+            // Apply styles
+            Object.assign(pulseElement.style, pulseStyles);
             
             // Make sure parent has relative positioning and overflow visible
             circle.style.position = 'relative';
             circle.style.overflow = 'visible';
+            // Safari-specific optimizations
+            circle.style.WebkitTransformStyle = 'preserve-3d';
+            circle.style.transformStyle = 'preserve-3d';
+            circle.style.WebkitBackfaceVisibility = 'hidden';
+            circle.style.backfaceVisibility = 'hidden';
             
             // Add pulse element to circle
             circle.appendChild(pulseElement);
             
-            // Create infinite pulse animation with more dramatic effect
-            gsap.set(pulseElement, { scale: 0.8, opacity: 0.8 });
+            // Safari-compatible GSAP animation with force3D
+            gsap.set(pulseElement, { 
+                scale: 0.8, 
+                opacity: 0.8,
+                force3D: true 
+            });
+            
             gsap.to(pulseElement, {
                 scale: 2.5,
                 opacity: 0,
@@ -621,25 +684,41 @@ function misc() {
                 ease: "power2.out",
                 repeat: -1,
                 repeatDelay: 1,
-                yoyo: false
+                yoyo: false,
+                force3D: true, // Safari hardware acceleration
+                onComplete: () => {
+                    // Reset for Safari
+                    gsap.set(pulseElement, { scale: 0.8, opacity: 0.8 });
+                }
             });
             
-            // Add a secondary pulse for more visual impact
-            const pulseElement2 = pulseElement.cloneNode(true);
-            pulseElement2.style.animationDelay = '1s';
-            circle.appendChild(pulseElement2);
-            
-            gsap.set(pulseElement2, { scale: 0.8, opacity: 0.6 });
-            gsap.to(pulseElement2, {
-                scale: 2.2,
-                opacity: 0,
-                duration: 2,
-                ease: "power2.out",
-                repeat: -1,
-                repeatDelay: 1,
-                delay: 1,
-                yoyo: false
-            });
+            // Add a secondary pulse for more visual impact (with Safari delay)
+            setTimeout(() => {
+                const pulseElement2 = pulseElement.cloneNode(true);
+                circle.appendChild(pulseElement2);
+                
+                gsap.set(pulseElement2, { 
+                    scale: 0.8, 
+                    opacity: 0.6,
+                    force3D: true 
+                });
+                
+                gsap.to(pulseElement2, {
+                    scale: 2.2,
+                    opacity: 0,
+                    duration: 2,
+                    ease: "power2.out",
+                    repeat: -1,
+                    repeatDelay: 1,
+                    delay: 1,
+                    yoyo: false,
+                    force3D: true,
+                    onComplete: () => {
+                        // Reset for Safari
+                        gsap.set(pulseElement2, { scale: 0.8, opacity: 0.6 });
+                    }
+                });
+            }, 100 * index); // Stagger creation for Safari
         });
     }
 
@@ -788,19 +867,19 @@ function misc() {
     // --- END OF TOOLTIP SYSTEM ---
 
     document.addEventListener("DOMContentLoaded", function () {
-        // DETECT TOUCH DEVICES FOR OPTIMIZATIONS WITH BREAKPOINT
+        // DETECT TOUCH DEVICES FOR OPTIMIZATIONS WITH BREAKPOINT (Safari compatible)
         const isDesktop = !("ontouchstart" in window || navigator.maxTouchPoints > 0);
-        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0 || isIOSSafari;
         
         // Add breakpoint check - consider devices under 1024px as mobile/tablet
         const isMobileBreakpoint = window.innerWidth < 1024;
         const shouldUseTouchBehavior = isTouchDevice || isMobileBreakpoint;
         
-        // INITIAL STATES
-        gsap.set("#nav", { yPercent: -100 });
-        gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0 });
-        gsap.set(".hero-nav-item", { y: -100, opacity: 0 });
-        gsap.set(".tooltip_wrap", { autoAlpha: 0 });
+        // INITIAL STATES with Safari optimizations
+        gsap.set("#nav", { yPercent: -100, force3D: true });
+        gsap.set(".hero-wordmark .hero-path", { yPercent: 100, opacity: 0, force3D: true });
+        gsap.set(".hero-nav-item", { y: -100, opacity: 0, force3D: true });
+        gsap.set(".tooltip_wrap", { autoAlpha: 0, force3D: true });
         
         const headerSplit = document.querySelector("#header-split");
         if (headerSplit) {
@@ -830,6 +909,7 @@ function misc() {
                         y: (y * 0.3),
                         duration: 0.8,
                         ease: 'power4.out',
+                        force3D: true // Safari performance
                     });
                 });
 
@@ -839,6 +919,7 @@ function misc() {
                         y: 0,
                         duration: 1.2,
                         ease: 'elastic.out(1, 0.6)',
+                        force3D: true // Safari performance
                     });
                 });
             });
