@@ -432,3 +432,99 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
+
+/* Method 1: Using text-align (works for inline/inline-block images) */
+.image-container {
+  text-align: center;
+}
+
+.image-container img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Method 2: Using flexbox (modern approach, works in all current browsers) */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-center img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Method 3: Using margin auto (for block-level images) */
+.block-center img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Method 4: Using CSS Grid (modern approach) */
+.grid-center {
+  display: grid;
+  place-items: center;
+}
+
+.grid-center img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Method 5: Universal image centering - applies to all images */
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Safari-specific fixes and optimizations */
+img {
+  /* Ensures proper scaling in Safari */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  
+  /* Improves image rendering in Safari */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  
+  /* Prevents Safari from adding blue tint to images */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+/* Legacy browser support (IE9+) */
+.legacy-center {
+  text-align: center;
+}
+
+.legacy-center img {
+  display: inline-block;
+  *display: inline; /* IE7 fallback */
+  *zoom: 1; /* IE7 fallback */
+  vertical-align: top;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive image centering for different screen sizes */
+@media screen and (max-width: 768px) {
+  img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Additional Safari-specific media query */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  img {
+    /* Safari-only styles */
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
