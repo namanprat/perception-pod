@@ -957,7 +957,7 @@ function misc() {
             setInterval(getTime, 1000);
         }
 
-        // Card animations (optimized) with single flip logic
+        // Card animations (FIXED FOR SAFARI HOVER ISSUES)
         const cards = document.querySelectorAll(".card_wrap");
         let currentlyFlippedCard = null;
 
@@ -969,6 +969,10 @@ function misc() {
             let animationId = null;
             let lastTime = 0;
             const throttleDelay = 16; // ~60fps
+            
+            // SAFARI FIX: Track hover state explicitly
+            let isHovered = false;
+            let mouseLeaveTimeout = null;
 
             gsap.set(card, { transformPerspective: 1000 });
 
@@ -1027,10 +1031,9 @@ function misc() {
                         }
                     },
                     onComplete: () => {
-                        if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint) {
-                            if (card.matches(":hover")) {
-                                gsap.to(highlight, { opacity: 1, duration: 0.2 });
-                            }
+                        // SAFARI FIX: Only show highlight if explicitly hovered and not flipped
+                        if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint && isHovered) {
+                            gsap.to(highlight, { opacity: 1, duration: 0.2 });
                         }
                     }
                 });
@@ -1040,6 +1043,13 @@ function misc() {
                 let leaveTween = null;
                 
                 card.addEventListener("mouseenter", () => {
+                    // SAFARI FIX: Clear any existing timeout and set hover state
+                    if (mouseLeaveTimeout) {
+                        clearTimeout(mouseLeaveTimeout);
+                        mouseLeaveTimeout = null;
+                    }
+                    isHovered = true;
+                    
                     if (leaveTween) leaveTween.kill();
                     if (highlight && !isFlipped) {
                         gsap.to(highlight, { opacity: 1, duration: 0.2 });
@@ -1047,35 +1057,58 @@ function misc() {
                 });
                 
                 card.addEventListener("mouseleave", () => {
-                    if (animationId) {
-                        cancelAnimationFrame(animationId);
-                        animationId = null;
-                    }
-                    
-                    leaveTween = gsap.to(card, {
-                        rotationX: 0,
-                        rotationY: 0,
-                        scale: 1,
-                        duration: 1,
-                        ease: "elastic.out(1, 0.75)"
-                    });
-                    
-                    if (cardSubject) {
-                        gsap.to(cardSubject, {
-                            x: 0,
-                            y: 0,
+                    // SAFARI FIX: Use timeout to ensure mouse actually left
+                    mouseLeaveTimeout = setTimeout(() => {
+                        isHovered = false;
+                        
+                        if (animationId) {
+                            cancelAnimationFrame(animationId);
+                            animationId = null;
+                        }
+                        
+                        leaveTween = gsap.to(card, {
                             rotationX: 0,
                             rotationY: 0,
+                            scale: 1,
                             duration: 1,
                             ease: "elastic.out(1, 0.75)"
                         });
+                        
+                        if (cardSubject) {
+                            gsap.to(cardSubject, {
+                                x: 0,
+                                y: 0,
+                                rotationX: 0,
+                                rotationY: 0,
+                                duration: 1,
+                                ease: "elastic.out(1, 0.75)"
+                            });
+                        }
+                        
+                        if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
+                    }, 50); // Small delay to prevent false triggers
+                });
+                
+                // SAFARI FIX: Also listen for document-level events to catch edge cases
+                document.addEventListener("mousemove", (e) => {
+                    if (!card.contains(e.target) && isHovered) {
+                        // Force mouse leave if cursor is not over the card
+                        card.dispatchEvent(new Event('mouseleave'));
                     }
-                    
-                    if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
                 });
                 
                 card.addEventListener("mousemove", (e) => {
                     if (gsap.isTweening(cardInner) || shouldUseTouchBehavior) return;
+                    
+                    // SAFARI FIX: Verify mouse is actually over the card
+                    const rect = card.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    
+                    // Check if mouse is within bounds
+                    if (mouseX < 0 || mouseX > rect.width || mouseY < 0 || mouseY > rect.height) {
+                        return;
+                    }
                     
                     const now = performance.now();
                     if (now - lastTime < throttleDelay) return;
@@ -1086,10 +1119,6 @@ function misc() {
                     }
                     
                     animationId = requestAnimationFrame(() => {
-                        const rect = card.getBoundingClientRect();
-                        const mouseX = e.clientX - rect.left;
-                        const mouseY = e.clientY - rect.top;
-                        
                         const moveX = ((mouseX - rect.width / 2) / rect.width) * 20;
                         const moveY = ((mouseY - rect.height / 2) / rect.height) * 20;
                         
@@ -1123,7 +1152,7 @@ function misc() {
                             });
                         }
 
-                        if (highlight) {
+                        if (highlight && isHovered) {
                             gsap.set(highlight, {
                                 "--mx": `${mouseX}px`,
                                 "--my": `${mouseY}px`,
