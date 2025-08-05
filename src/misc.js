@@ -1628,8 +1628,9 @@ function misc() {
             }
         });
 
-        // FIXED: Smooth scroll links with proper data attribute handling
+        // FIXED: Smooth scroll links with proper data attribute handling + Footer wordmark scroll to top
         const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
+        const footerWordmark = document.querySelector(".footer_wordmark");
 
         scrollLinks.forEach(link => {
             link.addEventListener('click', (event) => {
@@ -1671,6 +1672,22 @@ function misc() {
                 }
             });
         });
+
+        // Footer wordmark click to scroll to top
+        if (footerWordmark) {
+            footerWordmark.addEventListener('click', (event) => {
+                event.preventDefault();
+                
+                gsap.to(window, {
+                    duration: 1.5,
+                    scrollTo: {
+                        y: 0, // Scroll to top
+                        offsetY: 0
+                    },
+                    ease: "power2.inOut"
+                });
+            });
+        }
     });
 }
 
