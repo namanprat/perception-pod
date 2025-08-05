@@ -191,6 +191,120 @@ textarea,
   opacity: var(--o);
 }
 
+/* ===== CARD STYLES WITH SCALE COMPLETELY DISABLED ===== */
+
+/* Force no scaling on any card elements - Safari specific fixes */
+.card_wrap,
+.card_wrap *,
+.card_inner,
+.card-subject,
+.card-highlight {
+  /* Prevent any scale transforms */
+  -webkit-transform: scale(1) !important;
+  -moz-transform: scale(1) !important;
+  -ms-transform: scale(1) !important;
+  -o-transform: scale(1) !important;
+  transform: scale(1) !important;
+  
+  /* Override any scale in transform property */
+  will-change: transform !important;
+  
+  /* Disable zoom and scale CSS properties */
+  zoom: 1 !important;
+  -webkit-transform-origin: center center !important;
+  -moz-transform-origin: center center !important;
+  -ms-transform-origin: center center !important;
+  -o-transform-origin: center center !important;
+  transform-origin: center center !important;
+}
+
+/* Specifically disable hover scaling */
+.card_wrap:hover,
+.card_wrap:hover *,
+.card_inner:hover,
+.card-subject:hover {
+  -webkit-transform: scale(1) !important;
+  -moz-transform: scale(1) !important;
+  -ms-transform: scale(1) !important;
+  -o-transform: scale(1) !important;
+  transform: scale(1) !important;
+}
+
+/* Safari specific anti-scale measures */
+@media not all and (min-resolution:.001dpcm) {
+  @supports (-webkit-appearance:none) {
+    .card_wrap,
+    .card_wrap *,
+    .card_inner,
+    .card-subject {
+      -webkit-transform: scale(1) !important;
+      transform: scale(1) !important;
+      zoom: 1 !important;
+    }
+    
+    .card_wrap:hover,
+    .card_wrap:hover * {
+      -webkit-transform: scale(1) !important;
+      transform: scale(1) !important;
+    }
+  }
+}
+
+/* Disable any CSS animations that might include scale */
+.card_wrap,
+.card_wrap *,
+.card_inner,
+.card-subject {
+  -webkit-animation: none !important;
+  -moz-animation: none !important;
+  -ms-animation: none !important;
+  -o-animation: none !important;
+  animation: none !important;
+}
+
+/* Force 1:1 scale using CSS custom properties */
+.card_wrap {
+  --card-scale: 1;
+  -webkit-transform: scale(var(--card-scale)) !important;
+  -moz-transform: scale(var(--card-scale)) !important;
+  -ms-transform: scale(var(--card-scale)) !important;
+  -o-transform: scale(var(--card-scale)) !important;
+  transform: scale(var(--card-scale)) !important;
+}
+
+/* Disable any transition that might affect scale */
+.card_wrap,
+.card_wrap *,
+.card_inner,
+.card-subject {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -ms-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+
+/* Re-enable only the transitions we want (rotation only) */
+.card_wrap {
+  -webkit-transition: -webkit-transform 0.6s ease !important;
+  transition: transform 0.6s ease !important;
+}
+
+/* Prevent backface-visibility issues that might cause scaling */
+.card_wrap,
+.card_inner,
+.card-subject {
+  -webkit-backface-visibility: hidden !important;
+  -moz-backface-visibility: hidden !important;
+  -ms-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  
+  -webkit-perspective: 1000px !important;
+  -moz-perspective: 1000px !important;
+  -ms-perspective: 1000px !important;
+  perspective: 1000px !important;
+}
+
 /* ===== TOOLTIP CIRCLE PULSE ANIMATION CSS ===== */
 
 /* Ensure tooltip circles have proper positioning context */
