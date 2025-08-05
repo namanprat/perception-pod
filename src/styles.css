@@ -448,7 +448,9 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
+#header-reveal,
 .header-line-wrapper {
+  align-items: center;
   text-align: center !important;
   align-self: center;
 }
