@@ -1364,7 +1364,7 @@ function misc() {
         });
 
         // FIXED: Smooth scroll links with proper data attribute handling
-        const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
+        const scrollLinks = document.querySelectorAll(".scroll-link, #services-link, #about-link");
 
         scrollLinks.forEach(link => {
             link.addEventListener('click', (event) => {
