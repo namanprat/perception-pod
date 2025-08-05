@@ -14,9 +14,7 @@ body {
   width: -moz-fit-content;
   width: fit-content;
 }
-.cards-container * {
-  zoom: 1 !important;
-}
+
 .split-line {
   margin-top: -5px;
   padding-bottom: 5px;
@@ -449,3 +447,4 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
+
