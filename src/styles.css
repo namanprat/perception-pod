@@ -448,7 +448,10 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
-
+.header-line-wrapper {
+  text-align: center !important;
+  align-self: center;
+}
 
 @media only screen and (min-width: 768px) {
 h1,
