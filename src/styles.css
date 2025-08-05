@@ -147,6 +147,7 @@ textarea,
 }
 
 .card-highlight::before {
+  border-radius: var(--radius--main);
     -webkit-transform: translateZ(0);
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
