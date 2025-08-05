@@ -1149,18 +1149,19 @@ function misc() {
                             gsap.to(card, {
                                 rotationX: targetRotateX,
                                 rotationY: targetRotateY,
-                                scale: 1.05,
+                                // scale: 1.05, // DISABLED: Card scale on hover
                                 duration: 0.6,
                                 ease: "power2.out",
                                 overwrite: "auto" // Prevent conflicts
                             });
                         } else {
-                            gsap.to(card, {
-                                scale: 1.05,
-                                duration: 0.6,
-                                ease: "power2.out",
-                                overwrite: "auto"
-                            });
+                            // No scale animation when flipped either
+                            // gsap.to(card, {
+                            //     scale: 1.05,
+                            //     duration: 0.6,
+                            //     ease: "power2.out",
+                            //     overwrite: "auto"
+                            // });
                         }
                         
                         if (cardSubject) {
@@ -1364,7 +1365,7 @@ function misc() {
         });
 
         // FIXED: Smooth scroll links with proper data attribute handling
-        const scrollLinks = document.querySelectorAll(".scroll-link, #services-link, #about-link");
+        const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
 
         scrollLinks.forEach(link => {
             link.addEventListener('click', (event) => {
