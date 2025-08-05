@@ -191,27 +191,6 @@ textarea,
   opacity: var(--o);
 }
 
-/* ===== CARD STYLES WITH SCALE DISABLED ===== */
-
-/* Remove any scale animations/transforms from card elements */
-.card_wrap {
-  /* REMOVED: Any scale-related hover effects */
-  -webkit-transition: transform 0.3s ease;
-  transition: transform 0.3s ease;
-}
-
-/* Disable scale on card hover states */
-.card_wrap:hover {
-  /* REMOVED: transform: scale(1.05) or any scale properties */
-}
-
-/* Ensure cards never scale beyond 1 */
-.card_wrap,
-.card_inner,
-.card-subject {
-  max-scale: 1 !important;
-}
-
 /* ===== TOOLTIP CIRCLE PULSE ANIMATION CSS ===== */
 
 /* Ensure tooltip circles have proper positioning context */
