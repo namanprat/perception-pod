@@ -352,11 +352,18 @@ textarea,
   -webkit-transition: all 0.3s ease;
   transition: all 0.3s ease;
   
+  /* Subtle shadow behind tooltip circles */
+  -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  
   /* Ensure it's above the pulse */
   z-index: 2;
   position: relative;
 }
 
+.tooltip-circle::before {
+  box-shadow: 2px 2px 4px #000000;
+}
 /* Hover state enhancement */
 .tooltip-circle:hover {
   z-index: 3;
@@ -432,4 +439,3 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
-
