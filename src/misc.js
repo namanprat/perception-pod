@@ -1494,9 +1494,9 @@ function misc() {
             // Rotate arrow
             if (arrow) {
                 openTl.to(arrow, {
-                    rotation: 180, // or 45, or whatever rotation you prefer
+                    rotation: 45, // or 45, or whatever rotation you prefer
                     duration: 0.4,
-                    ease: "power2.out"
+                    ease: "power2.inOut"
                 });
             }
             
@@ -1509,7 +1509,7 @@ function misc() {
             openTl.to(answerWrapper, {
                 height: naturalHeight,
                 duration: 0.6,
-                ease: "power3.out"
+                ease: "power3.inOut"
             }, arrow ? "-=0.2" : 0);
             
             // Set height to auto after animation for responsive design
