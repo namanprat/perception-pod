@@ -22,9 +22,12 @@ body {
 }
 
 .header-line-wrapper {
-  width: -webkit-fit-content;
-  width: -moz-fit-content;
-  width: fit-content;
+margin: auto;
+align-self: center;
+  overflow: hidden;
+  padding: 0.1em;
+  padding-left: 0 !important;
+
 }
 
 .footer_contain h1 {
@@ -115,11 +118,6 @@ textarea,
   height: var(--_typography---font-size--h3);
 }
 
-.header-line-wrapper {
-  overflow: hidden;
-  padding: 0.1em;
-  padding-left: 0 !important;
-}
 
 .body-line-wrapper {
   overflow: hidden;
