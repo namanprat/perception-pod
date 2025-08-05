@@ -957,9 +957,44 @@ function misc() {
             setInterval(getTime, 1000);
         }
 
-        // Card animations (FIXED FOR SAFARI SCALING ISSUES)
+        // Card animations (FIXED FOR SAFARI SCALING ISSUES + AUTO-FLIP BACK)
         const cards = document.querySelectorAll(".card_wrap");
         let currentlyFlippedCard = null;
+
+        // Function to flip back any currently flipped card
+        function flipBackCurrentCard() {
+            if (currentlyFlippedCard) {
+                const cardInner = currentlyFlippedCard.querySelector(".card_inner");
+                if (cardInner) {
+                    gsap.to(cardInner, {
+                        rotationY: 0,
+                        duration: 0.7,
+                        ease: "power3.inOut"
+                    });
+                    // Reset the flipped state
+                    currentlyFlippedCard.isFlipped = false;
+                    currentlyFlippedCard = null;
+                }
+            }
+        }
+
+        // Global click listener to flip back cards when clicking outside
+        document.addEventListener('click', (e) => {
+            // Check if the click was outside of any card
+            const clickedCard = e.target.closest('.card_wrap');
+            
+            if (!clickedCard && currentlyFlippedCard) {
+                // Clicked outside any card, flip back the current card
+                flipBackCurrentCard();
+            }
+        });
+
+        // Global escape key listener to flip back cards
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && currentlyFlippedCard) {
+                flipBackCurrentCard();
+            }
+        });
 
         cards.forEach((card) => {
             const cardInner = card.querySelector(".card_inner");
@@ -977,13 +1012,22 @@ function misc() {
 
             gsap.set(card, { 
                 transformPerspective: 1000,
-                // SAFARI FIX: Ensure initial transform values are set
+                // SAFARI FIX: Ensure initial transform values are set with no scale
                 rotationX: 0,
                 rotationY: 0,
-                scale: 1
+                scale: 1,
+                // Force no scaling at all
+                force3D: true
             });
 
-            card.addEventListener("click", () => {
+            // SAFARI SCALE FIX: Override any potential scaling with direct CSS
+            card.style.transform = 'scale(1)';
+            card.style.webkitTransform = 'scale(1)';
+
+            card.addEventListener("click", (e) => {
+                // Prevent event from bubbling up to document click listener
+                e.stopPropagation();
+                
                 if (animationId) {
                     cancelAnimationFrame(animationId);
                     animationId = null;
@@ -1025,15 +1069,19 @@ function misc() {
                     onStart: () => {
                         if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
                         if (!shouldUseTouchBehavior) {
-                            // SAFARI FIX: Explicitly reset all transform values
+                            // SAFARI FIX: Explicitly reset all transform values with no scale
                             gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
-                                scale: 1, // Ensure scale is reset to 1
+                                scale: 1, // Force scale to 1
                                 duration: 0.7,
                                 ease: "power3.inOut"
                             });
                         }
+                        // SAFARI SCALE FIX: Force CSS transform to scale(1)
+                        card.style.transform = 'scale(1)';
+                        card.style.webkitTransform = 'scale(1)';
+                        
                         if (highlight) {
                             gsap.set(highlight, {
                                 "--mx": "50%",
@@ -1049,6 +1097,9 @@ function misc() {
                         if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint && isHovered) {
                             gsap.to(highlight, { opacity: 1, duration: 0.2 });
                         }
+                        // SAFARI SCALE FIX: Ensure scale stays at 1
+                        card.style.transform = 'scale(1)';
+                        card.style.webkitTransform = 'scale(1)';
                     }
                 });
             });
@@ -1096,7 +1147,12 @@ function misc() {
                                 scale: 1, // Explicitly set scale to 1
                                 duration: 1,
                                 ease: "elastic.out(1, 0.75)",
-                                overwrite: true // Kill any conflicting animations
+                                overwrite: true, // Kill any conflicting animations
+                                onComplete: () => {
+                                    // SAFARI SCALE FIX: Force CSS after animation
+                                    card.style.transform = 'scale(1)';
+                                    card.style.webkitTransform = 'scale(1)';
+                                }
                             });
                             
                             if (cardSubject) {
@@ -1107,7 +1163,12 @@ function misc() {
                                     rotationY: 0,
                                     duration: 1,
                                     ease: "elastic.out(1, 0.75)",
-                                    overwrite: true
+                                    overwrite: true,
+                                    onComplete: () => {
+                                        // SAFARI SCALE FIX: Force CSS on card subject too
+                                        cardSubject.style.transform = 'scale(1)';
+                                        cardSubject.style.webkitTransform = 'scale(1)';
+                                    }
                                 });
                             }
                             
@@ -1149,19 +1210,29 @@ function misc() {
                             gsap.to(card, {
                                 rotationX: targetRotateX,
                                 rotationY: targetRotateY,
-                                // scale: 1.05, // DISABLED: Card scale on hover
+                                scale: 1, // SAFARI FIX: Force scale to always be 1
                                 duration: 0.6,
                                 ease: "power2.out",
-                                overwrite: "auto" // Prevent conflicts
+                                overwrite: "auto", // Prevent conflicts
+                                onUpdate: () => {
+                                    // SAFARI SCALE FIX: Force CSS during animation
+                                    card.style.transform = `rotateX(${targetRotateX}deg) rotateY(${targetRotateY}deg) scale(1)`;
+                                    card.style.webkitTransform = `rotateX(${targetRotateX}deg) rotateY(${targetRotateY}deg) scale(1)`;
+                                }
                             });
                         } else {
-                            // No scale animation when flipped either
-                            // gsap.to(card, {
-                            //     scale: 1.05,
-                            //     duration: 0.6,
-                            //     ease: "power2.out",
-                            //     overwrite: "auto"
-                            // });
+                            // SAFARI FIX: Even when flipped, ensure no scaling
+                            gsap.to(card, {
+                                scale: 1, // Force scale to 1
+                                duration: 0.6,
+                                ease: "power2.out",
+                                overwrite: "auto",
+                                onComplete: () => {
+                                    // SAFARI SCALE FIX: Force CSS after animation
+                                    card.style.transform = 'scale(1)';
+                                    card.style.webkitTransform = 'scale(1)';
+                                }
+                            });
                         }
                         
                         if (cardSubject) {
@@ -1170,9 +1241,15 @@ function misc() {
                                 y: moveY,
                                 rotationX: -moveY * 0.5,
                                 rotationY: moveX * 0.5,
+                                scale: 1, // SAFARI FIX: Force scale to 1 on subject too
                                 duration: 0.6,
                                 ease: "power2.out",
-                                overwrite: "auto"
+                                overwrite: "auto",
+                                onComplete: () => {
+                                    // SAFARI SCALE FIX: Force CSS on subject
+                                    cardSubject.style.transform = `translateX(${moveX}px) translateY(${moveY}px) rotateX(${-moveY * 0.5}deg) rotateY(${moveX * 0.5}deg) scale(1)`;
+                                    cardSubject.style.webkitTransform = `translateX(${moveX}px) translateY(${moveY}px) rotateX(${-moveY * 0.5}deg) rotateY(${moveX * 0.5}deg) scale(1)`;
+                                }
                             });
                         }
 
@@ -1410,27 +1487,93 @@ function misc() {
     });
 }
 
-// ADDITIONAL SAFARI FIX: Reset transforms on window focus/blur to prevent stuck states
+// ADDITIONAL SAFARI SCALE FIX: Completely prevent scaling with multiple methods
 window.addEventListener('focus', () => {
     // Reset all cards to default state when window regains focus
-    gsap.set('.card_wrap', {
-        rotationX: 0,
-        rotationY: 0,
-        scale: 1
-    });
-});
-
-// ADDITIONAL SAFARI FIX: Reset on page visibility change
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        // Reset all cards when page becomes visible again
-        gsap.set('.card_wrap', {
+    const allCards = document.querySelectorAll('.card_wrap');
+    allCards.forEach(card => {
+        // GSAP reset
+        gsap.set(card, {
             rotationX: 0,
             rotationY: 0,
             scale: 1
         });
+        
+        // Direct CSS reset
+        card.style.transform = 'scale(1)';
+        card.style.webkitTransform = 'scale(1)';
+        card.style.MozTransform = 'scale(1)';
+        card.style.msTransform = 'scale(1)';
+        card.style.OTransform = 'scale(1)';
+        
+        // Reset any child elements too
+        const cardInner = card.querySelector('.card_inner');
+        const cardSubject = card.querySelector('.card-subject');
+        
+        if (cardInner) {
+            cardInner.style.transform = 'scale(1)';
+            cardInner.style.webkitTransform = 'scale(1)';
+        }
+        
+        if (cardSubject) {
+            cardSubject.style.transform = 'scale(1)';
+            cardSubject.style.webkitTransform = 'scale(1)';
+        }
+    });
+});
+
+// ADDITIONAL SAFARI SCALE FIX: Reset on page visibility change
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        // Reset all cards when page becomes visible again
+        const allCards = document.querySelectorAll('.card_wrap');
+        allCards.forEach(card => {
+            // GSAP reset
+            gsap.set(card, {
+                rotationX: 0,
+                rotationY: 0,
+                scale: 1
+            });
+            
+            // Direct CSS reset
+            card.style.transform = 'scale(1)';
+            card.style.webkitTransform = 'scale(1)';
+            card.style.MozTransform = 'scale(1)';
+            card.style.msTransform = 'scale(1)';
+            card.style.OTransform = 'scale(1)';
+            
+            // Reset child elements
+            const cardInner = card.querySelector('.card_inner');
+            const cardSubject = card.querySelector('.card-subject');
+            
+            if (cardInner) {
+                cardInner.style.transform = 'scale(1)';
+                cardInner.style.webkitTransform = 'scale(1)';
+            }
+            
+            if (cardSubject) {
+                cardSubject.style.transform = 'scale(1)';
+                cardSubject.style.webkitTransform = 'scale(1)';
+            }
+        });
     }
 });
+
+// SAFARI SCALE FIX: Periodic cleanup to ensure no scaling occurs
+setInterval(() => {
+    const allCards = document.querySelectorAll('.card_wrap');
+    allCards.forEach(card => {
+        // Check if card has any unwanted scaling
+        const computedStyle = window.getComputedStyle(card);
+        const transform = computedStyle.transform || computedStyle.webkitTransform;
+        
+        // If transform contains scale other than 1, force it back to 1
+        if (transform && transform.includes('scale') && !transform.includes('scale(1)')) {
+            card.style.transform = 'scale(1)';
+            card.style.webkitTransform = 'scale(1)';
+        }
+    });
+}, 100); // Check every 100ms
 
 // Initialize everything
 function init() {
