@@ -1441,6 +1441,193 @@ function misc() {
             });
         });
 
+        // FAQ Accordion functionality with SplitText animations
+        const faqWrappers = document.querySelectorAll('.faq-wrapper');
+        let activeFAQ = null; // Track currently active FAQ
+        const faqSplitTexts = new Map(); // Store SplitText instances
+        
+        faqWrappers.forEach((wrapper, index) => {
+            const arrow = wrapper.querySelector('.faq-arrow');
+            const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
+            
+            if (!arrow || !answerWrapper) return;
+            
+            // Set initial state - answer wrapper hidden
+            gsap.set(answerWrapper, { 
+                height: 0, 
+                overflow: 'hidden',
+                autoAlpha: 1 // Keep it visible but collapsed
+            });
+            
+            // Create SplitText for the answer content
+            const answerText = answerWrapper.querySelector('p, .faq-answer-text, .answer-text');
+            let splitTextInstance = null;
+            
+            if (answerText) {
+                // Create SplitText instance
+                splitTextInstance = new SplitText(answerText, {
+                    type: "words",
+                    wordsClass: "faq-word"
+                });
+                
+                // Wrap each word in overflow containers (same style as tooltip and body-reveal)
+                splitTextInstance.words.forEach(word => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'u-overflow-hidden';
+                    wrapper.style.display = 'inline-block';
+                    word.parentNode.insertBefore(wrapper, word);
+                    wrapper.appendChild(word);
+                });
+                
+                // Set initial state for words (same as body-reveal style)
+                gsap.set(splitTextInstance.words, { 
+                    autoAlpha: 0, 
+                    y: 100 
+                });
+                
+                // Store the SplitText instance
+                faqSplitTexts.set(wrapper, splitTextInstance);
+            }
+            
+            // Add click event to arrow
+            arrow.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isCurrentlyActive = activeFAQ === wrapper;
+                
+                // Close currently active FAQ if there is one and it's different
+                if (activeFAQ && activeFAQ !== wrapper) {
+                    closeFAQ(activeFAQ);
+                }
+                
+                // Toggle current FAQ
+                if (isCurrentlyActive) {
+                    closeFAQ(wrapper);
+                    activeFAQ = null;
+                } else {
+                    openFAQ(wrapper);
+                    activeFAQ = wrapper;
+                }
+            });
+        });
+        
+        // Function to open FAQ
+        function openFAQ(wrapper) {
+            const arrow = wrapper.querySelector('.faq-arrow');
+            const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
+            const splitTextInstance = faqSplitTexts.get(wrapper);
+            
+            if (!answerWrapper) return;
+            
+            // Create timeline for opening animation
+            const openTl = gsap.timeline();
+            
+            // Rotate arrow (if you want arrow rotation)
+            if (arrow) {
+                openTl.to(arrow, {
+                    rotation: 180, // or 45, or whatever rotation you prefer
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            }
+            
+            // Get the natural height by temporarily setting it to auto
+            gsap.set(answerWrapper, { height: 'auto' });
+            const naturalHeight = answerWrapper.offsetHeight;
+            gsap.set(answerWrapper, { height: 0 });
+            
+            // Animate height to natural height
+            openTl.to(answerWrapper, {
+                height: naturalHeight,
+                duration: 0.6,
+                ease: "power3.out"
+            }, arrow ? "-=0.2" : 0);
+            
+            // Animate SplitText words in (same style as body-reveal)
+            if (splitTextInstance && splitTextInstance.words) {
+                openTl.to(splitTextInstance.words, {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration: 1.2,
+                    stagger: { amount: 0.4 },
+                    ease: "power4.inOut"
+                }, "-=0.3");
+            }
+            
+            // Set height to auto after animation for responsive design
+            openTl.set(answerWrapper, { height: 'auto' });
+            
+            // Add active class for styling
+            wrapper.classList.add('faq-active');
+        }
+        
+        // Function to close FAQ
+        function closeFAQ(wrapper) {
+            const arrow = wrapper.querySelector('.faq-arrow');
+            const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
+            const splitTextInstance = faqSplitTexts.get(wrapper);
+            
+            if (!answerWrapper) return;
+            
+            // Create timeline for closing animation
+            const closeTl = gsap.timeline();
+            
+            // Get current height for smooth animation
+            const currentHeight = answerWrapper.offsetHeight;
+            gsap.set(answerWrapper, { height: currentHeight });
+            
+            // Animate SplitText words out first (faster exit)
+            if (splitTextInstance && splitTextInstance.words) {
+                closeTl.to(splitTextInstance.words, {
+                    autoAlpha: 0,
+                    y: -50, // Exit upward
+                    duration: 0.4,
+                    stagger: { amount: 0.1, from: "end" },
+                    ease: "power2.in"
+                });
+            }
+            
+            // Animate height to 0
+            closeTl.to(answerWrapper, {
+                height: 0,
+                duration: 0.5,
+                ease: "power3.in"
+            }, "-=0.2");
+            
+            // Rotate arrow back (if you want arrow rotation)
+            if (arrow) {
+                closeTl.to(arrow, {
+                    rotation: 0,
+                    duration: 0.4,
+                    ease: "power2.out"
+                }, "-=0.4");
+            }
+            
+            // Remove active class
+            wrapper.classList.remove('faq-active');
+        }
+        
+        // Optional: Close FAQ when clicking outside (but not interfering with card clicks)
+        document.addEventListener('click', (e) => {
+            const clickedFAQ = e.target.closest('.faq-wrapper');
+            const clickedCard = e.target.closest('.card_wrap');
+            
+            // Only close FAQ if not clicking on FAQ or card
+            if (!clickedFAQ && !clickedCard && activeFAQ) {
+                closeFAQ(activeFAQ);
+                activeFAQ = null;
+            }
+        });
+        
+        // Optional: Close FAQ with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && activeFAQ) {
+                closeFAQ(activeFAQ);
+                activeFAQ = null;
+            }
+        });
+
         // FIXED: Smooth scroll links with proper data attribute handling
         const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
 
