@@ -579,17 +579,17 @@ function misc() {
     // Track if pulse animation has been added
     let pulseAnimationAdded = false;
     
-    // Add radial pulse animation to tooltip circles
-    function addRadialPulseToCircles() {
-        if (pulseAnimationAdded) return; // Prevent multiple calls
+    // Add simplified pulse animation to tooltip circles
+    function addPulseToCircles() {
+        if (pulseAnimationAdded) return;
         pulseAnimationAdded = true;
         
         tooltipCircles.forEach((circle) => {
-            // Create pseudo element for radial pulse
+            // Create single pulse element
             const pulseElement = document.createElement('div');
             pulseElement.className = 'tooltip-circle-pulse';
             
-            // Style the pulse element with more visible styling
+            // Style the pulse element
             Object.assign(pulseElement.style, {
                 position: 'absolute',
                 top: '50%',
@@ -597,48 +597,30 @@ function misc() {
                 width: '120%',
                 height: '120%',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.3) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
-                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0.1) 70%, transparent 100%)',
+                border: '1px solid rgba(255,255,255,0.2)',
                 transform: 'translate(-50%, -50%) scale(0.8)',
                 pointerEvents: 'none',
                 zIndex: '10',
-                opacity: '0.8'
+                opacity: '0.6'
             });
             
-            // Make sure parent has relative positioning and overflow visible
+            // Make sure parent has relative positioning
             circle.style.position = 'relative';
             circle.style.overflow = 'visible';
             
             // Add pulse element to circle
             circle.appendChild(pulseElement);
             
-            // Create infinite pulse animation with more dramatic effect
-            gsap.set(pulseElement, { scale: 0.8, opacity: 0.8 });
+            // Create single pulse animation
+            gsap.set(pulseElement, { scale: 0.8, opacity: 0.6 });
             gsap.to(pulseElement, {
-                scale: 2.5,
-                opacity: 0,
-                duration: 2,
-                ease: "power2.out",
-                repeat: -1,
-                repeatDelay: 1,
-                yoyo: false
-            });
-            
-            // Add a secondary pulse for more visual impact
-            const pulseElement2 = pulseElement.cloneNode(true);
-            pulseElement2.style.animationDelay = '1s';
-            circle.appendChild(pulseElement2);
-            
-            gsap.set(pulseElement2, { scale: 0.8, opacity: 0.6 });
-            gsap.to(pulseElement2, {
                 scale: 2.2,
                 opacity: 0,
-                duration: 2,
+                duration: 2.5,
                 ease: "power2.out",
                 repeat: -1,
-                repeatDelay: 1,
-                delay: 1,
-                yoyo: false
+                repeatDelay: 1.5
             });
         });
     }
@@ -678,12 +660,12 @@ function misc() {
                 });
                 
                 // Add pulse animation to all revealed circles
-                if (progress > 0.1) { // Only add pulse after some circles are visible
-                    addRadialPulseToCircles();
+                if (progress > 0.1) {
+                    addPulseToCircles();
                 }
             },
             onLeaveBack: () => {
-                // Reset tooltip wrap opacity when scrolling back to top with smoother, slower transition
+                // Reset tooltip wrap opacity when scrolling back to top
                 gsap.to(".tooltip_wrap", { 
                     autoAlpha: 0, 
                     duration: 0.8,
@@ -708,20 +690,20 @@ function misc() {
     // Add hover and click effects for tooltip circles
     tooltipCircles.forEach((circle, index) => {
         
-        // Hover enter effect (visual only)
+        // Hover enter effect - darken circle and fade others
         circle.addEventListener('mouseenter', function() {
-            // Visual hover effect (works on both desktop and mobile)
+            // Darken the hovered circle
             gsap.to(this, {
-                scale: 1.3,
+                filter: 'brightness(0.7)',
                 duration: 0.3,
-                ease: "back.out(1.7)"
+                ease: "power2.out"
             });
             
-            // Reduce opacity of other circles
+            // Fade out other circles
             tooltipCircles.forEach(otherCircle => {
                 if (otherCircle !== this) {
                     gsap.to(otherCircle, {
-                        opacity: 0.5,
+                        opacity: 0.3,
                         duration: 0.3,
                         ease: "power2.out"
                     });
@@ -729,13 +711,13 @@ function misc() {
             });
         });
         
-        // Hover leave effect (visual only)
+        // Hover leave effect - restore normal state
         circle.addEventListener('mouseleave', function() {
-            // Visual hover effect (works on both desktop and mobile)
+            // Restore normal brightness
             gsap.to(this, {
-                scale: 1,
+                filter: 'brightness(1)',
                 duration: 0.4,
-                ease: "elastic.out(1, 0.6)"
+                ease: "power2.out"
             });
             
             // Restore opacity of all circles
@@ -774,9 +756,9 @@ function misc() {
                 clickedBodyData || `This is the main content for circle ${index + 1}. You clicked to activate this.`
             );
             
-            // Scale animation on click
+            // Simple click feedback
             gsap.to(this, {
-                scale: 1.5,
+                filter: 'brightness(1.2)',
                 duration: 0.1,
                 ease: "power2.out",
                 yoyo: true,
