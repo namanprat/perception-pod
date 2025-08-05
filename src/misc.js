@@ -1785,5 +1785,4 @@ function init() {
     scrub(); // Initialize scrub animations and preloader
 }
 
-// Export functions
 export { init as default, playHeroReveal, scrub, misc };
