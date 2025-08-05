@@ -1441,10 +1441,9 @@ function misc() {
             });
         });
 
-        // FAQ Accordion functionality with SplitText animations
+        // FAQ Accordion functionality (simplified - no SplitText)
         const faqWrappers = document.querySelectorAll('.faq-wrapper');
         let activeFAQ = null; // Track currently active FAQ
-        const faqSplitTexts = new Map(); // Store SplitText instances
         
         faqWrappers.forEach((wrapper, index) => {
             const arrow = wrapper.querySelector('.faq-arrow');
@@ -1458,36 +1457,6 @@ function misc() {
                 overflow: 'hidden',
                 autoAlpha: 1 // Keep it visible but collapsed
             });
-            
-            // Create SplitText for the answer content
-            const answerText = answerWrapper.querySelector('p, .faq-answer-text, .answer-text');
-            let splitTextInstance = null;
-            
-            if (answerText) {
-                // Create SplitText instance
-                splitTextInstance = new SplitText(answerText, {
-                    type: "words",
-                    wordsClass: "faq-word"
-                });
-                
-                // Wrap each word in overflow containers (same style as tooltip and body-reveal)
-                splitTextInstance.words.forEach(word => {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'u-overflow-hidden';
-                    wrapper.style.display = 'inline-block';
-                    word.parentNode.insertBefore(wrapper, word);
-                    wrapper.appendChild(word);
-                });
-                
-                // Set initial state for words (same as body-reveal style)
-                gsap.set(splitTextInstance.words, { 
-                    autoAlpha: 0, 
-                    y: 100 
-                });
-                
-                // Store the SplitText instance
-                faqSplitTexts.set(wrapper, splitTextInstance);
-            }
             
             // Add click event to arrow
             arrow.addEventListener('click', (e) => {
@@ -1516,14 +1485,13 @@ function misc() {
         function openFAQ(wrapper) {
             const arrow = wrapper.querySelector('.faq-arrow');
             const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
-            const splitTextInstance = faqSplitTexts.get(wrapper);
             
             if (!answerWrapper) return;
             
             // Create timeline for opening animation
             const openTl = gsap.timeline();
             
-            // Rotate arrow (if you want arrow rotation)
+            // Rotate arrow
             if (arrow) {
                 openTl.to(arrow, {
                     rotation: 180, // or 45, or whatever rotation you prefer
@@ -1544,17 +1512,6 @@ function misc() {
                 ease: "power3.out"
             }, arrow ? "-=0.2" : 0);
             
-            // Animate SplitText words in (same style as body-reveal)
-            if (splitTextInstance && splitTextInstance.words) {
-                openTl.to(splitTextInstance.words, {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 1.2,
-                    stagger: { amount: 0.4 },
-                    ease: "power4.inOut"
-                }, "-=0.3");
-            }
-            
             // Set height to auto after animation for responsive design
             openTl.set(answerWrapper, { height: 'auto' });
             
@@ -1566,7 +1523,6 @@ function misc() {
         function closeFAQ(wrapper) {
             const arrow = wrapper.querySelector('.faq-arrow');
             const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
-            const splitTextInstance = faqSplitTexts.get(wrapper);
             
             if (!answerWrapper) return;
             
@@ -1577,25 +1533,14 @@ function misc() {
             const currentHeight = answerWrapper.offsetHeight;
             gsap.set(answerWrapper, { height: currentHeight });
             
-            // Animate SplitText words out first (faster exit)
-            if (splitTextInstance && splitTextInstance.words) {
-                closeTl.to(splitTextInstance.words, {
-                    autoAlpha: 0,
-                    y: -50, // Exit upward
-                    duration: 0.4,
-                    stagger: { amount: 0.1, from: "end" },
-                    ease: "power2.in"
-                });
-            }
-            
             // Animate height to 0
             closeTl.to(answerWrapper, {
                 height: 0,
                 duration: 0.5,
                 ease: "power3.in"
-            }, "-=0.2");
+            });
             
-            // Rotate arrow back (if you want arrow rotation)
+            // Rotate arrow back
             if (arrow) {
                 closeTl.to(arrow, {
                     rotation: 0,
@@ -1785,4 +1730,5 @@ function init() {
     scrub(); // Initialize scrub animations and preloader
 }
 
+// Export functions
 export { init as default, playHeroReveal, scrub, misc };
