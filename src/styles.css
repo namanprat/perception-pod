@@ -133,6 +133,10 @@ textarea,
 }
 
 .card-highlight {
+    -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   background-color: transparent;
   z-index: 2 !important;
   position: absolute;
@@ -143,6 +147,10 @@ textarea,
 }
 
 .card-highlight::before {
+    -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   background-color: transparent;
   content: '';
   opacity: 0.1;
