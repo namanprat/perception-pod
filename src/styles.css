@@ -448,3 +448,11 @@ textarea,
     border: 2px solid rgba(224, 230, 220, 0.8);
   }
 }
+
+
+@media only screen and (min-width: 768px) {
+h1,
+u-text-style-h1 {
+  text-align: center !important;
+}
+}
