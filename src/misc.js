@@ -957,7 +957,7 @@ function misc() {
             setInterval(getTime, 1000);
         }
 
-        // Card animations (FIXED FOR SAFARI HOVER ISSUES)
+        // Card animations (FIXED FOR SAFARI SCALING ISSUES)
         const cards = document.querySelectorAll(".card_wrap");
         let currentlyFlippedCard = null;
 
@@ -973,14 +973,25 @@ function misc() {
             // SAFARI FIX: Track hover state explicitly
             let isHovered = false;
             let mouseLeaveTimeout = null;
+            let isAnimating = false; // Prevent multiple animations
 
-            gsap.set(card, { transformPerspective: 1000 });
+            gsap.set(card, { 
+                transformPerspective: 1000,
+                // SAFARI FIX: Ensure initial transform values are set
+                rotationX: 0,
+                rotationY: 0,
+                scale: 1
+            });
 
             card.addEventListener("click", () => {
                 if (animationId) {
                     cancelAnimationFrame(animationId);
                     animationId = null;
                 }
+                
+                // Prevent click during animation
+                if (isAnimating) return;
+                isAnimating = true;
                 
                 // If another card is currently flipped, reset it first
                 if (currentlyFlippedCard && currentlyFlippedCard !== card) {
@@ -1014,9 +1025,11 @@ function misc() {
                     onStart: () => {
                         if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
                         if (!shouldUseTouchBehavior) {
+                            // SAFARI FIX: Explicitly reset all transform values
                             gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
+                                scale: 1, // Ensure scale is reset to 1
                                 duration: 0.7,
                                 ease: "power3.inOut"
                             });
@@ -1031,6 +1044,7 @@ function misc() {
                         }
                     },
                     onComplete: () => {
+                        isAnimating = false; // Allow new animations
                         // SAFARI FIX: Only show highlight if explicitly hovered and not flipped
                         if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint && isHovered) {
                             gsap.to(highlight, { opacity: 1, duration: 0.2 });
@@ -1042,65 +1056,71 @@ function misc() {
             if (isDesktop && !isMobileBreakpoint) {
                 let leaveTween = null;
                 
-                card.addEventListener("mouseenter", () => {
-                    // SAFARI FIX: Clear any existing timeout and set hover state
-                    if (mouseLeaveTimeout) {
-                        clearTimeout(mouseLeaveTimeout);
-                        mouseLeaveTimeout = null;
-                    }
-                    isHovered = true;
-                    
-                    if (leaveTween) leaveTween.kill();
-                    if (highlight && !isFlipped) {
-                        gsap.to(highlight, { opacity: 1, duration: 0.2 });
+                card.addEventListener("mouseenter", (e) => {
+                    // SAFARI FIX: Verify this is a real mouseenter event
+                    if (!card.contains(e.relatedTarget)) {
+                        // Clear any existing timeout and set hover state
+                        if (mouseLeaveTimeout) {
+                            clearTimeout(mouseLeaveTimeout);
+                            mouseLeaveTimeout = null;
+                        }
+                        isHovered = true;
+                        
+                        if (leaveTween) {
+                            leaveTween.kill();
+                            leaveTween = null;
+                        }
+                        
+                        if (highlight && !isFlipped) {
+                            gsap.to(highlight, { opacity: 1, duration: 0.2 });
+                        }
                     }
                 });
                 
-                card.addEventListener("mouseleave", () => {
-                    // SAFARI FIX: Use timeout to ensure mouse actually left
-                    mouseLeaveTimeout = setTimeout(() => {
-                        isHovered = false;
-                        
-                        if (animationId) {
-                            cancelAnimationFrame(animationId);
-                            animationId = null;
-                        }
-                        
-                        leaveTween = gsap.to(card, {
-                            rotationX: 0,
-                            rotationY: 0,
-                            scale: 1,
-                            duration: 1,
-                            ease: "elastic.out(1, 0.75)"
-                        });
-                        
-                        if (cardSubject) {
-                            gsap.to(cardSubject, {
-                                x: 0,
-                                y: 0,
+                card.addEventListener("mouseleave", (e) => {
+                    // SAFARI FIX: Verify this is a real mouseleave event
+                    if (!card.contains(e.relatedTarget)) {
+                        // Use timeout to ensure mouse actually left
+                        mouseLeaveTimeout = setTimeout(() => {
+                            isHovered = false;
+                            
+                            if (animationId) {
+                                cancelAnimationFrame(animationId);
+                                animationId = null;
+                            }
+                            
+                            // SAFARI FIX: More explicit reset with kill previous animations
+                            leaveTween = gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
+                                scale: 1, // Explicitly set scale to 1
                                 duration: 1,
-                                ease: "elastic.out(1, 0.75)"
+                                ease: "elastic.out(1, 0.75)",
+                                overwrite: true // Kill any conflicting animations
                             });
-                        }
-                        
-                        if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
-                    }, 50); // Small delay to prevent false triggers
-                });
-                
-                // SAFARI FIX: Also listen for document-level events to catch edge cases
-                document.addEventListener("mousemove", (e) => {
-                    if (!card.contains(e.target) && isHovered) {
-                        // Force mouse leave if cursor is not over the card
-                        card.dispatchEvent(new Event('mouseleave'));
+                            
+                            if (cardSubject) {
+                                gsap.to(cardSubject, {
+                                    x: 0,
+                                    y: 0,
+                                    rotationX: 0,
+                                    rotationY: 0,
+                                    duration: 1,
+                                    ease: "elastic.out(1, 0.75)",
+                                    overwrite: true
+                                });
+                            }
+                            
+                            if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
+                        }, 10); // Reduced delay
                     }
                 });
                 
                 card.addEventListener("mousemove", (e) => {
-                    if (gsap.isTweening(cardInner) || shouldUseTouchBehavior) return;
+                    // SAFARI FIX: Additional checks
+                    if (gsap.isTweening(cardInner) || shouldUseTouchBehavior || isAnimating) return;
                     
-                    // SAFARI FIX: Verify mouse is actually over the card
+                    // Verify mouse is actually over the card
                     const rect = card.getBoundingClientRect();
                     const mouseX = e.clientX - rect.left;
                     const mouseY = e.clientY - rect.top;
@@ -1131,13 +1151,15 @@ function misc() {
                                 rotationY: targetRotateY,
                                 scale: 1.05,
                                 duration: 0.6,
-                                ease: "power2.out"
+                                ease: "power2.out",
+                                overwrite: "auto" // Prevent conflicts
                             });
                         } else {
                             gsap.to(card, {
                                 scale: 1.05,
                                 duration: 0.6,
-                                ease: "power2.out"
+                                ease: "power2.out",
+                                overwrite: "auto"
                             });
                         }
                         
@@ -1148,7 +1170,8 @@ function misc() {
                                 rotationX: -moveY * 0.5,
                                 rotationY: moveX * 0.5,
                                 duration: 0.6,
-                                ease: "power2.out"
+                                ease: "power2.out",
+                                overwrite: "auto"
                             });
                         }
 
@@ -1340,17 +1363,42 @@ function misc() {
             });
         });
 
-        // Smooth scroll links
-        const scrollLinks = document.querySelectorAll(".scroll-link");
+        // FIXED: Smooth scroll links with proper data attribute handling
+        const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
 
         scrollLinks.forEach(link => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
-                const targetSelector = link.getAttribute('data-scroll-to');
+                
+                let targetSelector = null;
+                
+                // Check for data-scroll-to attribute first
+                if (link.hasAttribute('data-scroll-to')) {
+                    targetSelector = link.getAttribute('data-scroll-to');
+                }
+                // Handle specific ID-based links
+                else if (link.id === 'service-link') {
+                    targetSelector = '#services';
+                }
+                else if (link.id === 'about-link') {
+                    targetSelector = '#about';
+                }
+                // Fallback: check href attribute for hash links
+                else if (link.href && link.href.includes('#')) {
+                    targetSelector = link.href.split('#')[1];
+                    if (targetSelector) {
+                        targetSelector = '#' + targetSelector;
+                    }
+                }
+                
+                // Scroll to target if it exists
                 if (targetSelector && document.querySelector(targetSelector)) {
                     gsap.to(window, {
                         duration: 1.5,
-                        scrollTo: targetSelector,
+                        scrollTo: {
+                            y: targetSelector,
+                            offsetY: 0 // You can adjust this offset if needed
+                        },
                         ease: "power2.inOut"
                     });
                 } else {
@@ -1360,6 +1408,28 @@ function misc() {
         });
     });
 }
+
+// ADDITIONAL SAFARI FIX: Reset transforms on window focus/blur to prevent stuck states
+window.addEventListener('focus', () => {
+    // Reset all cards to default state when window regains focus
+    gsap.set('.card_wrap', {
+        rotationX: 0,
+        rotationY: 0,
+        scale: 1
+    });
+});
+
+// ADDITIONAL SAFARI FIX: Reset on page visibility change
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        // Reset all cards when page becomes visible again
+        gsap.set('.card_wrap', {
+            rotationX: 0,
+            rotationY: 0,
+            scale: 1
+        });
+    }
+});
 
 // Initialize everything
 function init() {
