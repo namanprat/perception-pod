@@ -1387,9 +1387,10 @@ function misc() {
         
         faqWrappers.forEach((wrapper, index) => {
             const arrow = wrapper.querySelector('.faq-arrow');
+            const faqHeader = wrapper.querySelector('.faq-header');
             const answerWrapper = wrapper.querySelector('.faq-answer-wrapper');
             
-            if (!arrow || !answerWrapper) return;
+            if (!answerWrapper) return;
             
             // Set initial state - answer wrapper hidden
             gsap.set(answerWrapper, { 
@@ -1398,8 +1399,8 @@ function misc() {
                 autoAlpha: 1 // Keep it visible but collapsed
             });
             
-            // Add click event to arrow
-            arrow.addEventListener('click', (e) => {
+            // Function to toggle FAQ
+            function toggleFAQ(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -1418,7 +1419,19 @@ function misc() {
                     openFAQ(wrapper);
                     activeFAQ = wrapper;
                 }
-            });
+            }
+            
+            // Add click event to arrow (if it exists)
+            if (arrow) {
+                arrow.addEventListener('click', toggleFAQ);
+            }
+            
+            // Add click event to faq-header (if it exists)
+            if (faqHeader) {
+                faqHeader.addEventListener('click', toggleFAQ);
+                // Add cursor pointer to indicate it's clickable
+                faqHeader.style.cursor = 'pointer';
+            }
         });
         
         // Function to open FAQ
