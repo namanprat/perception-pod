@@ -1,9 +1,6 @@
 *::-webkit-scrollbar {
   display: none;
 }
-body {
-  overflow: hidden;
-}
 .pseudo-bg {
   visibility: hidden;
 }
