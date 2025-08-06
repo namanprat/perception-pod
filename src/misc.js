@@ -810,7 +810,7 @@ function misc() {
             });
             
             gsap.set(headerSplitText.words, { 
-                y: "105%" 
+                y: "108%" 
             });
             
         }
