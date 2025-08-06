@@ -957,7 +957,7 @@ function misc() {
             setInterval(getTime, 1000);
         }
 
-        // Card animations (FIXED FOR SAFARI SCALING ISSUES + AUTO-FLIP BACK)
+        // Card animations (UPDATED: Added scale on hover, removed card-subject parallax)
         const cards = document.querySelectorAll(".card_wrap");
         let currentlyFlippedCard = null;
 
@@ -999,28 +999,25 @@ function misc() {
         cards.forEach((card) => {
             const cardInner = card.querySelector(".card_inner");
             const highlight = card.querySelector(".card-highlight");
-            const cardSubject = card.querySelector(".card-subject");
             let isFlipped = false;
             let animationId = null;
             let lastTime = 0;
             const throttleDelay = 16; // ~60fps
             
-            // SAFARI FIX: Track hover state explicitly
+            // Track hover state explicitly
             let isHovered = false;
             let mouseLeaveTimeout = null;
             let isAnimating = false; // Prevent multiple animations
 
             gsap.set(card, { 
                 transformPerspective: 1000,
-                // SAFARI FIX: Ensure initial transform values are set with no scale
                 rotationX: 0,
                 rotationY: 0,
                 scale: 1,
-                // Force no scaling at all
                 force3D: true
             });
 
-            // SAFARI SCALE FIX: Override any potential scaling with direct CSS
+            // Override any potential scaling with direct CSS
             card.style.transform = 'scale(1)';
             card.style.webkitTransform = 'scale(1)';
 
@@ -1069,18 +1066,16 @@ function misc() {
                     onStart: () => {
                         if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.1 });
                         if (!shouldUseTouchBehavior) {
-                            // SAFARI FIX: Explicitly reset all transform values with no scale
+                            // Reset all transform values with scale 1.05 if hovered, otherwise 1
+                            const targetScale = isHovered && !isFlipped ? 1.05 : 1;
                             gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
-                                scale: 1, // Force scale to 1
+                                scale: targetScale,
                                 duration: 0.7,
                                 ease: "power3.inOut"
                             });
                         }
-                        // SAFARI SCALE FIX: Force CSS transform to scale(1)
-                        card.style.transform = 'scale(1)';
-                        card.style.webkitTransform = 'scale(1)';
                         
                         if (highlight) {
                             gsap.set(highlight, {
@@ -1093,13 +1088,10 @@ function misc() {
                     },
                     onComplete: () => {
                         isAnimating = false; // Allow new animations
-                        // SAFARI FIX: Only show highlight if explicitly hovered and not flipped
+                        // Only show highlight if explicitly hovered and not flipped
                         if (isDesktop && !isFlipped && highlight && !isMobileBreakpoint && isHovered) {
                             gsap.to(highlight, { opacity: 1, duration: 0.2 });
                         }
-                        // SAFARI SCALE FIX: Ensure scale stays at 1
-                        card.style.transform = 'scale(1)';
-                        card.style.webkitTransform = 'scale(1)';
                     }
                 });
             });
@@ -1108,7 +1100,7 @@ function misc() {
                 let leaveTween = null;
                 
                 card.addEventListener("mouseenter", (e) => {
-                    // SAFARI FIX: Verify this is a real mouseenter event
+                    // Verify this is a real mouseenter event
                     if (!card.contains(e.relatedTarget)) {
                         // Clear any existing timeout and set hover state
                         if (mouseLeaveTimeout) {
@@ -1122,6 +1114,15 @@ function misc() {
                             leaveTween = null;
                         }
                         
+                        // Scale card to 1.05 on hover (only if not flipped)
+                        if (!isFlipped) {
+                            gsap.to(card, {
+                                scale: 1.05,
+                                duration: 0.4,
+                                ease: "power2.out"
+                            });
+                        }
+                        
                         if (highlight && !isFlipped) {
                             gsap.to(highlight, { opacity: 1, duration: 0.2 });
                         }
@@ -1129,7 +1130,7 @@ function misc() {
                 });
                 
                 card.addEventListener("mouseleave", (e) => {
-                    // SAFARI FIX: Verify this is a real mouseleave event
+                    // Verify this is a real mouseleave event
                     if (!card.contains(e.relatedTarget)) {
                         // Use timeout to ensure mouse actually left
                         mouseLeaveTimeout = setTimeout(() => {
@@ -1140,46 +1141,24 @@ function misc() {
                                 animationId = null;
                             }
                             
-                            // SAFARI FIX: More explicit reset with kill previous animations
+                            // Reset to normal scale and rotation
                             leaveTween = gsap.to(card, {
                                 rotationX: 0,
                                 rotationY: 0,
-                                scale: 1, // Explicitly set scale to 1
+                                scale: 1, // Always return to scale 1 on leave
                                 duration: 1,
                                 ease: "elastic.out(1, 0.75)",
-                                overwrite: true, // Kill any conflicting animations
-                                onComplete: () => {
-                                    // SAFARI SCALE FIX: Force CSS after animation
-                                    card.style.transform = 'scale(1)';
-                                    card.style.webkitTransform = 'scale(1)';
-                                }
+                                overwrite: true
                             });
                             
-                            if (cardSubject) {
-                                gsap.to(cardSubject, {
-                                    x: 0,
-                                    y: 0,
-                                    rotationX: 0,
-                                    rotationY: 0,
-                                    duration: 1,
-                                    ease: "elastic.out(1, 0.75)",
-                                    overwrite: true,
-                                    onComplete: () => {
-                                        // SAFARI SCALE FIX: Force CSS on card subject too
-                                        cardSubject.style.transform = 'scale(1)';
-                                        cardSubject.style.webkitTransform = 'scale(1)';
-                                    }
-                                });
-                            }
-                            
                             if (highlight) gsap.to(highlight, { opacity: 0, duration: 0.3 });
-                        }, 10); // Reduced delay
+                        }, 10);
                     }
                 });
                 
                 card.addEventListener("mousemove", (e) => {
-                    // SAFARI FIX: Additional checks
-                    if (gsap.isTweening(cardInner) || shouldUseTouchBehavior || isAnimating) return;
+                    // Skip mousemove if card is flipped or animating
+                    if (gsap.isTweening(cardInner) || shouldUseTouchBehavior || isAnimating || isFlipped) return;
                     
                     // Verify mouse is actually over the card
                     const rect = card.getBoundingClientRect();
@@ -1200,9 +1179,6 @@ function misc() {
                     }
                     
                     animationId = requestAnimationFrame(() => {
-                        const moveX = ((mouseX - rect.width / 2) / rect.width) * 20;
-                        const moveY = ((mouseY - rect.height / 2) / rect.height) * 20;
-                        
                         if (!isFlipped) {
                             const targetRotateX = -((mouseY - rect.height / 2) / (rect.height / 2)) * 12;
                             const targetRotateY = ((mouseX - rect.width / 2) / (rect.width / 2)) * 12;
@@ -1210,46 +1186,10 @@ function misc() {
                             gsap.to(card, {
                                 rotationX: targetRotateX,
                                 rotationY: targetRotateY,
-                                scale: 1, // SAFARI FIX: Force scale to always be 1
+                                scale: 1.05, // Keep scale at 1.05 during hover
                                 duration: 0.6,
                                 ease: "power2.out",
-                                overwrite: "auto", // Prevent conflicts
-                                onUpdate: () => {
-                                    // SAFARI SCALE FIX: Force CSS during animation
-                                    card.style.transform = `rotateX(${targetRotateX}deg) rotateY(${targetRotateY}deg) scale(1)`;
-                                    card.style.webkitTransform = `rotateX(${targetRotateX}deg) rotateY(${targetRotateY}deg) scale(1)`;
-                                }
-                            });
-                        } else {
-                            // SAFARI FIX: Even when flipped, ensure no scaling
-                            gsap.to(card, {
-                                scale: 1, // Force scale to 1
-                                duration: 0.6,
-                                ease: "power2.out",
-                                overwrite: "auto",
-                                onComplete: () => {
-                                    // SAFARI SCALE FIX: Force CSS after animation
-                                    card.style.transform = 'scale(1)';
-                                    card.style.webkitTransform = 'scale(1)';
-                                }
-                            });
-                        }
-                        
-                        if (cardSubject) {
-                            gsap.to(cardSubject, {
-                                x: moveX,
-                                y: moveY,
-                                rotationX: -moveY * 0.5,
-                                rotationY: moveX * 0.5,
-                                scale: 1, // SAFARI FIX: Force scale to 1 on subject too
-                                duration: 0.6,
-                                ease: "power2.out",
-                                overwrite: "auto",
-                                onComplete: () => {
-                                    // SAFARI SCALE FIX: Force CSS on subject
-                                    cardSubject.style.transform = `translateX(${moveX}px) translateY(${moveY}px) rotateX(${-moveY * 0.5}deg) rotateY(${moveX * 0.5}deg) scale(1)`;
-                                    cardSubject.style.webkitTransform = `translateX(${moveX}px) translateY(${moveY}px) rotateX(${-moveY * 0.5}deg) rotateY(${moveX * 0.5}deg) scale(1)`;
-                                }
+                                overwrite: "auto"
                             });
                         }
 
@@ -1657,16 +1597,10 @@ window.addEventListener('focus', () => {
         
         // Reset any child elements too
         const cardInner = card.querySelector('.card_inner');
-        const cardSubject = card.querySelector('.card-subject');
         
         if (cardInner) {
             cardInner.style.transform = 'scale(1)';
             cardInner.style.webkitTransform = 'scale(1)';
-        }
-        
-        if (cardSubject) {
-            cardSubject.style.transform = 'scale(1)';
-            cardSubject.style.webkitTransform = 'scale(1)';
         }
     });
 });
@@ -1693,16 +1627,10 @@ document.addEventListener('visibilitychange', () => {
             
             // Reset child elements
             const cardInner = card.querySelector('.card_inner');
-            const cardSubject = card.querySelector('.card-subject');
             
             if (cardInner) {
                 cardInner.style.transform = 'scale(1)';
                 cardInner.style.webkitTransform = 'scale(1)';
-            }
-            
-            if (cardSubject) {
-                cardSubject.style.transform = 'scale(1)';
-                cardSubject.style.webkitTransform = 'scale(1)';
             }
         });
     }
@@ -1716,8 +1644,8 @@ setInterval(() => {
         const computedStyle = window.getComputedStyle(card);
         const transform = computedStyle.transform || computedStyle.webkitTransform;
         
-        // If transform contains scale other than 1, force it back to 1
-        if (transform && transform.includes('scale') && !transform.includes('scale(1)')) {
+        // If transform contains scale other than 1 or 1.05, force it back to 1
+        if (transform && transform.includes('scale') && !transform.includes('scale(1)') && !transform.includes('scale(1.05)')) {
             card.style.transform = 'scale(1)';
             card.style.webkitTransform = 'scale(1)';
         }
