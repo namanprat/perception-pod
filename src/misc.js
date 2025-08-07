@@ -1526,7 +1526,7 @@ function misc() {
             }
         });
 
-        // FIXED: Instant scroll links with proper data attribute handling + Footer wordmark scroll to top
+        // FIXED: Smooth scroll links with proper data attribute handling + Footer wordmark scroll to top
         const scrollLinks = document.querySelectorAll(".scroll-link, #service-link, #about-link");
         const footerWordmark = document.querySelector(".footer_wordmark");
 
@@ -1555,26 +1555,35 @@ function misc() {
                     }
                 }
                 
-                // Instantly snap to target if it exists
+                // Scroll to target if it exists
                 if (targetSelector && document.querySelector(targetSelector)) {
-                    const targetElement = document.querySelector(targetSelector);
-                    const targetPosition = targetElement.offsetTop;
-                    
-                    // Instant scroll without animation
-                    window.scrollTo(0, targetPosition);
+                    gsap.to(window, {
+                        duration: 1.5,
+                        scrollTo: {
+                            y: targetSelector,
+                            offsetY: 0 // You can adjust this offset if needed
+                        },
+                        ease: "power2.inOut"
+                    });
                 } else {
                     console.warn(`Scroll-to target "${targetSelector}" not found.`);
                 }
             });
         });
 
-        // Footer wordmark click to instantly scroll to top
+        // Footer wordmark click to scroll to top
         if (footerWordmark) {
             footerWordmark.addEventListener('click', (event) => {
                 event.preventDefault();
                 
-                // Instant scroll to top without animation
-                window.scrollTo(0, 0);
+                gsap.to(window, {
+                    duration: 1.5,
+                    scrollTo: {
+                        y: 0, // Scroll to top
+                        offsetY: 0
+                    },
+                    ease: "power2.inOut"
+                });
             });
         }
     });
