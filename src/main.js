@@ -25,4 +25,4 @@ scrub()
 menu()
 
 
-console.log("%cDesigned and built by https://namanprat.com", "background:blue;color:#fff;padding: 8px;");
+console.log("%cDesigned and built by https://duforn.com", "background:black;color:#fff;padding: 12px;");
