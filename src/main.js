@@ -25,4 +25,4 @@ scrub()
 menu()
 
 
-console.log("%cDesigned and built by https://duforn.com", "background:black;color:#fff;padding: 12px;");
+// console.log("%cDesigned and built by https://duforn.com", "background:black;color:#fff;padding: 12px;");
