@@ -58,10 +58,7 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     const cleanupCallbacks = [];
     const frameLoadPromises = new Map();
     const preloaderTimeline = gsap.timeline();
-    const eagerLimit = Math.min(config.eagerCount, imageSequence.totalImages);
-    let backgroundLoadingStarted = false;
     let scrollTween = null;
-    let intersectionObserver = null;
 
     preloaderTimeline
         .to('.preloader-wordmark', { opacity: 1, yPercent: 0, duration: 0.2 })
@@ -77,20 +74,19 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
         });
 
     const existingCanvasNode = document.getElementById('pp-scrub');
-    let canvas =
-        existingCanvasNode instanceof HTMLCanvasElement
-            ? existingCanvasNode
-            : existingCanvasNode?.querySelector('canvas');
+    let canvas = existingCanvasNode instanceof HTMLCanvasElement ? existingCanvasNode : null;
 
     if (!canvas) {
         canvas = document.createElement('canvas');
-        canvas.id = existingCanvasNode ? 'pp-scrub-canvas' : 'pp-scrub';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.display = 'block';
+        canvas.id = 'pp-scrub';
 
         if (existingCanvasNode) {
-            existingCanvasNode.appendChild(canvas);
+            Array.from(existingCanvasNode.attributes).forEach((attribute) => {
+                canvas.setAttribute(attribute.name, attribute.value);
+            });
+
+            canvas.id = 'pp-scrub';
+            existingCanvasNode.replaceWith(canvas);
         } else {
             scrubContain.appendChild(canvas);
         }
@@ -106,7 +102,7 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     }
 
     const resizeCanvas = () => {
-        const rect = (existingCanvasNode ?? scrubContain).getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
         canvas.width = Math.max(1, Math.floor(rect.width * dpr));
@@ -283,53 +279,6 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
         });
     };
 
-    const beginBackgroundLoading = async () => {
-        if (backgroundLoadingStarted) {
-            return;
-        }
-
-        backgroundLoadingStarted = true;
-
-        for (
-            let startIndex = eagerLimit;
-            startIndex < imageSequence.totalImages;
-            startIndex += config.batchSize
-        ) {
-            const indexes = Array.from(
-                { length: Math.min(config.batchSize, imageSequence.totalImages - startIndex) },
-                (_, offset) => startIndex + offset
-            );
-
-            // Yield between batches so the main thread stays responsive.
-            await loadFrameRange(indexes);
-            await new Promise((resolve) => window.setTimeout(resolve, 0));
-        }
-    };
-
-    const observeScrubVisibility = () => {
-        if (!('IntersectionObserver' in window)) {
-            beginBackgroundLoading();
-            return;
-        }
-
-        intersectionObserver = new IntersectionObserver(
-            (entries) => {
-                const isVisible = entries.some((entry) => entry.isIntersecting);
-
-                if (isVisible) {
-                    beginBackgroundLoading();
-                    intersectionObserver.disconnect();
-                    intersectionObserver = null;
-                }
-            },
-            {
-                rootMargin: config.preloadRootMargin,
-            }
-        );
-
-        intersectionObserver.observe(scrubWrap);
-    };
-
     const handleResize = () => {
         resizeCanvas();
         drawFrame();
@@ -339,19 +288,21 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     cleanupCallbacks.push(() => window.removeEventListener('resize', handleResize));
 
     resizeCanvas();
-    observeScrubVisibility();
+    updateProgress(0, imageSequence.totalImages);
 
     const loadStartTime = performance.now();
-    const eagerIndexes = Array.from({ length: eagerLimit }, (_, index) => index);
+    const frameIndexes = Array.from({ length: imageSequence.totalImages }, (_, index) => index);
 
-    loadFrameRange(eagerIndexes, (completedCount) => updateProgress(completedCount, eagerLimit)).then(() => {
-        updateProgress(eagerLimit, eagerLimit);
+    loadFrameRange(
+        frameIndexes,
+        (completedCount) => updateProgress(completedCount, imageSequence.totalImages)
+    ).then(() => {
+        updateProgress(imageSequence.totalImages, imageSequence.totalImages);
         initScrollTrigger();
         runPreloaderExit(loadStartTime);
     });
 
     cleanupCallbacks.push(() => {
-        intersectionObserver?.disconnect();
         scrollTween?.kill();
     });
 

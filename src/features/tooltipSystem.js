@@ -38,6 +38,7 @@ function applyTooltipContent(state, headerText, bodyText, animate = true) {
     clearTooltipState(state);
 
     if (tooltipHeader && headerText !== null && headerText !== undefined) {
+        gsap.set(tooltipHeader, { autoAlpha: 1, display: 'block' });
         tooltipHeader.textContent = headerText;
         state.currentHeaderSplit = createTooltipSplit(tooltipHeader, 'words', 'tooltip-word');
 
@@ -50,6 +51,7 @@ function applyTooltipContent(state, headerText, bodyText, animate = true) {
     }
 
     if (tooltipBody && bodyText !== null && bodyText !== undefined) {
+        gsap.set(tooltipBody, { autoAlpha: 1, display: 'block' });
         tooltipBody.textContent = bodyText;
         state.currentBodySplit = createTooltipSplit(tooltipBody, 'words', 'tooltip-body-word');
 
@@ -148,6 +150,14 @@ export function initTooltipSystem() {
     const revealedCircles = new Set();
     let pulseAnimationAdded = false;
     let lastRevealedIndex = -1;
+
+    if (tooltipHeader) {
+        gsap.set(tooltipHeader, { autoAlpha: 1, display: 'block' });
+    }
+
+    if (tooltipBody) {
+        gsap.set(tooltipBody, { autoAlpha: 1, display: 'block' });
+    }
 
     const addListener = (element, eventName, handler) => {
         element.addEventListener(eventName, handler);
