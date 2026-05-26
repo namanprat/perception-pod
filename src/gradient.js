@@ -13,6 +13,10 @@ class Gradient {
         this.mouseSmooth = new THREE.Vector2(0, 0);
         this.mouseLerpFactor = 0.08;
         this.animationId = null;
+        this.isVisible = true;
+        this.isInViewport = true;
+        this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.intersectionObserver = null;
         
         this.defaultColors = {
             color1: '#ffd2c7ff',     // amber yellow
@@ -184,6 +188,7 @@ class Gradient {
             canvas: this.canvas,
             antialias: true 
         });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 
         // Set initial size based on canvas or window
         const width = this.canvas.clientWidth || window.innerWidth;
@@ -221,8 +226,11 @@ class Gradient {
         // Set up event listeners
         this.setupEventListeners();
 
-        // Start animation
-        this.animate();
+        // Render once so the canvas has a static frame even if animation stays paused.
+        this.renderer.render(this.scene, this.camera);
+
+        // Start animation only when the canvas is visible.
+        this.updateAnimationState();
 
         // Expose control functions globally
         window.setMouseIntensity = this.setMouseIntensity.bind(this);
@@ -242,12 +250,30 @@ class Gradient {
         // Mouse tracking
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onWindowResize = this.onWindowResize.bind(this);
+        this.onVisibilityChange = this.onVisibilityChange.bind(this);
         
         window.addEventListener('mousemove', this.onMouseMove);
         window.addEventListener('resize', this.onWindowResize);
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
+
+        if ('IntersectionObserver' in window && this.canvas) {
+            this.intersectionObserver = new IntersectionObserver(
+                ([entry]) => {
+                    this.isInViewport = entry?.isIntersecting ?? true;
+                    this.updateAnimationState();
+                },
+                {
+                    rootMargin: '25% 0px',
+                }
+            );
+
+            this.intersectionObserver.observe(this.canvas);
+        }
     }
 
     onMouseMove(event) {
+        if (this.prefersReducedMotion) return;
+
         if (this.canvas) {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = event.clientX - rect.left;
@@ -293,8 +319,45 @@ class Gradient {
         const width = this.canvas.clientWidth;
         const height = this.canvas.clientHeight;
         
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         this.renderer.setSize(width, height);
         this.shaderMaterial.uniforms.iResolution.value.set(width, height);
+    }
+
+    onVisibilityChange() {
+        this.isVisible = document.visibilityState === 'visible';
+        this.updateAnimationState();
+    }
+
+    updateAnimationState() {
+        if (this.prefersReducedMotion) {
+            this.stop();
+            return;
+        }
+
+        if (this.isVisible && this.isInViewport) {
+            this.start();
+            return;
+        }
+
+        this.stop();
+    }
+
+    start() {
+        if (this.animationId || !this.shaderMaterial || !this.renderer) {
+            return;
+        }
+
+        this.animate();
+    }
+
+    stop() {
+        if (!this.animationId) {
+            return;
+        }
+
+        cancelAnimationFrame(this.animationId);
+        this.animationId = null;
     }
 
     // Animation loop
@@ -312,12 +375,12 @@ class Gradient {
 
     // Cleanup method
     destroy() {
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-        }
+        this.stop();
         
         window.removeEventListener('mousemove', this.onMouseMove);
         window.removeEventListener('resize', this.onWindowResize);
+        document.removeEventListener('visibilitychange', this.onVisibilityChange);
+        this.intersectionObserver?.disconnect();
         
         if (this.geometry) this.geometry.dispose();
         if (this.shaderMaterial) this.shaderMaterial.dispose();
