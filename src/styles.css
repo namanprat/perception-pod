@@ -59,6 +59,14 @@ canvas {
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  opacity: 0;
+  visibility: hidden;
+}
+
+#tooltip-header,
+#tooltip-body {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .scrub_contain {

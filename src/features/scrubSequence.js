@@ -1,4 +1,4 @@
-import { gsap } from '../runtime/gsapRuntime';
+import { gsap, ScrollTrigger } from '../runtime/gsapRuntime';
 import { buildFrameUrls, resolveScrubConfig } from '../utils/scrubConfig';
 
 function resolveRuntimeScrubConfig(container) {
@@ -229,6 +229,10 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
                 scrub: 0.5,
                 onUpdate: () => drawFrame(),
             },
+        });
+
+        window.requestAnimationFrame(() => {
+            ScrollTrigger.refresh();
         });
     };
 

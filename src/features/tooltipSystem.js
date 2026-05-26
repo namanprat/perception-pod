@@ -129,11 +129,12 @@ function removePulseElements(circle) {
 export function initTooltipSystem() {
     const tooltipCircles = gsap.utils.toArray('.tooltip-circle');
     const tooltipWrap = document.querySelector('.tooltip_wrap');
+    const tooltipInfos = gsap.utils.toArray('.tooltip-info');
     const tooltipHeader = document.querySelector('#tooltip-header');
     const tooltipBody = document.querySelector('#tooltip-body');
-    const scrubContain = document.querySelector('.scrub_contain');
+    const scrubWrap = document.querySelector('.scrub_wrap');
 
-    if (!scrubContain || tooltipCircles.length === 0) {
+    if (!scrubWrap || tooltipCircles.length === 0) {
         return () => {};
     }
 
@@ -156,17 +157,36 @@ export function initTooltipSystem() {
         listeners.push(() => element.removeEventListener(eventName, handler));
     };
 
+    const setTooltipShellVisibility = (visible, duration = 0) => {
+        const targets = [tooltipWrap, ...tooltipInfos].filter(Boolean);
+
+        if (targets.length === 0) {
+            return;
+        }
+
+        if (duration > 0) {
+            gsap.to(targets, {
+                autoAlpha: visible ? 1 : 0,
+                duration,
+                ease: visible ? 'power2.out' : 'power3.out',
+            });
+            return;
+        }
+
+        gsap.set(targets, { autoAlpha: visible ? 1 : 0 });
+    };
+
     const resetTooltipInfo = () => {
         clearTooltipState(state);
 
         if (tooltipHeader) {
             tooltipHeader.textContent = state.originalHeaderText;
-            gsap.set(tooltipHeader, { autoAlpha: 0 });
+            gsap.set(tooltipHeader, { autoAlpha: 0, display: 'block' });
         }
 
         if (tooltipBody) {
             tooltipBody.textContent = state.originalBodyText;
-            gsap.set(tooltipBody, { autoAlpha: 0 });
+            gsap.set(tooltipBody, { autoAlpha: 0, display: 'block' });
         }
 
         state.activeCircle = null;
@@ -244,34 +264,20 @@ export function initTooltipSystem() {
     };
 
     gsap.set('.tooltip-circle', { autoAlpha: 0 });
-    gsap.set('.tooltip_wrap', { autoAlpha: 0 });
+    setTooltipShellVisibility(false);
     resetTooltipInfo();
 
     const tooltipTrigger = ScrollTrigger.create({
-        trigger: scrubContain,
-        start: 'bottom 20%',
+        trigger: scrubWrap,
+        start: 'top 80%',
         end: 'bottom top',
         scrub: true,
         onEnter: () => {
-            if (tooltipWrap) {
-                gsap.to(tooltipWrap, {
-                    autoAlpha: 1,
-                    duration: 0.2,
-                    ease: 'power2.out',
-                });
-            }
-
+            setTooltipShellVisibility(true, 0.2);
             restoreOriginalTooltip();
         },
         onEnterBack: () => {
-            if (tooltipWrap) {
-                gsap.to(tooltipWrap, {
-                    autoAlpha: 1,
-                    duration: 0.2,
-                    ease: 'power2.out',
-                });
-            }
-
+            setTooltipShellVisibility(true, 0.2);
             restoreOriginalTooltip();
         },
         onUpdate: (self) => {
@@ -294,14 +300,7 @@ export function initTooltipSystem() {
             }
         },
         onLeaveBack: () => {
-            if (tooltipWrap) {
-                gsap.to(tooltipWrap, {
-                    autoAlpha: 0,
-                    duration: 0.8,
-                    ease: 'power3.out',
-                });
-            }
-
+            setTooltipShellVisibility(false, 0.8);
             tooltipCircles.forEach((circle) => {
                 circle.classList.remove('tooltip-active');
                 removePulseElements(circle);
