@@ -151,14 +151,6 @@ export function initTooltipSystem() {
     let pulseAnimationAdded = false;
     let lastRevealedIndex = -1;
 
-    if (tooltipHeader) {
-        gsap.set(tooltipHeader, { autoAlpha: 1, display: 'block' });
-    }
-
-    if (tooltipBody) {
-        gsap.set(tooltipBody, { autoAlpha: 1, display: 'block' });
-    }
-
     const addListener = (element, eventName, handler) => {
         element.addEventListener(eventName, handler);
         listeners.push(() => element.removeEventListener(eventName, handler));
@@ -253,6 +245,7 @@ export function initTooltipSystem() {
 
     gsap.set('.tooltip-circle', { autoAlpha: 0 });
     gsap.set('.tooltip_wrap', { autoAlpha: 0 });
+    resetTooltipInfo();
 
     const tooltipTrigger = ScrollTrigger.create({
         trigger: scrubContain,
@@ -260,6 +253,17 @@ export function initTooltipSystem() {
         end: 'bottom top',
         scrub: true,
         onEnter: () => {
+            if (tooltipWrap) {
+                gsap.to(tooltipWrap, {
+                    autoAlpha: 1,
+                    duration: 0.2,
+                    ease: 'power2.out',
+                });
+            }
+
+            restoreOriginalTooltip();
+        },
+        onEnterBack: () => {
             if (tooltipWrap) {
                 gsap.to(tooltipWrap, {
                     autoAlpha: 1,
