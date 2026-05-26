@@ -164,39 +164,46 @@ function initScrollRevealText() {
     }
 
     if (headerText?.words?.length || bodyText?.words?.length) {
-        gsap.timeline({
+        const revealTimeline = gsap.timeline({
             scrollTrigger: {
                 trigger: '#header-reveal',
                 start: 'top 75%',
             },
-        })
-            .from(headerText?.words ?? [], {
+        });
+
+        revealTimeline.from(headerText?.words ?? [], {
                 yPercent: 105,
                 opacity: 0,
                 stagger: 0.05,
                 duration: 1.5,
                 ease: 'power4.inOut',
-            })
-            .from(
-                '.blocker_wrap',
+            });
+
+        const blockerWrap = document.querySelector('.blocker_wrap');
+
+        if (blockerWrap) {
+            revealTimeline.from(
+                blockerWrap,
                 {
                     opacity: 0,
                     duration: 1.5,
                     ease: 'power4.inOut',
                 },
                 '<'
-            )
-            .to(
-                bodyText?.words ?? [],
-                {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 1.5,
-                    stagger: { amount: 0.5 },
-                    ease: 'power4.inOut',
-                },
-                '<'
             );
+        }
+
+        revealTimeline.to(
+            bodyText?.words ?? [],
+            {
+                autoAlpha: 1,
+                y: 0,
+                duration: 1.5,
+                stagger: { amount: 0.5 },
+                ease: 'power4.inOut',
+            },
+            '<'
+        );
     }
 
     cleanupRegistry.add(() => headerText?.revert());
@@ -208,16 +215,18 @@ function initScrollRevealText() {
 function initNavigationTimelines() {
     const nav = document.querySelector('#nav');
     const heroContain = document.querySelector('.hero_contain');
+    const navItems = document.querySelectorAll('.nav-item');
 
     if (!nav || !heroContain) {
         return () => {};
     }
 
     const showNavTimeline = gsap.timeline({ paused: true });
-    showNavTimeline
-        .to('#nav', { yPercent: 0, duration: 0.5, ease: 'power2.out' })
-        .fromTo(
-            '.nav-item',
+    showNavTimeline.to('#nav', { yPercent: 0, duration: 0.5, ease: 'power2.out' });
+
+    if (navItems.length > 0) {
+        showNavTimeline.fromTo(
+            navItems,
             {
                 opacity: 0,
                 y: 20,
@@ -231,10 +240,11 @@ function initNavigationTimelines() {
             },
             '-=0.3'
         );
+    }
 
     const hideNavTimeline = gsap.timeline({ paused: true });
-    hideNavTimeline
-        .to('.nav-item', {
+    if (navItems.length > 0) {
+        hideNavTimeline.to(navItems, {
             opacity: 0,
             y: 20,
             duration: 0.3,
@@ -243,8 +253,10 @@ function initNavigationTimelines() {
                 from: 'end',
             },
             ease: 'power2.in',
-        })
-        .to('#nav', { yPercent: -100, duration: 0.4, ease: 'power2.in' }, '-=0.2');
+        });
+    }
+
+    hideNavTimeline.to('#nav', { yPercent: -100, duration: 0.4, ease: 'power2.in' }, '-=0.2');
 
     const heroTrigger = ScrollTrigger.create({
         trigger: heroContain,
@@ -320,7 +332,6 @@ function initHamburgerMenus() {
         const flipDuration = 0.75;
 
         if (!hamburgerEl || !menuContainEl || !flipItemEl || !menuWrapEl || !menuBaseEl) {
-            console.warn('GSAP Hamburger: One or more essential elements are missing.');
             return;
         }
 

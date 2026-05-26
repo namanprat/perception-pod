@@ -17,6 +17,7 @@ function menu() {
     gsap.set('.contact-contain', { opacity: 0 });
 
     const animatedChildren = Array.from(contactContain.children);
+    const formHeadings = Array.from(document.querySelectorAll('form h3'));
     const listeners = [];
 
     const openTl = gsap.timeline({ paused: true });
@@ -55,8 +56,9 @@ function menu() {
             },
             '<'
         )
-        .from(
-            'form h3',
+    if (formHeadings.length > 0) {
+        openTl.from(
+            formHeadings,
             {
                 delay: -0.1,
                 y: -100,
@@ -66,6 +68,7 @@ function menu() {
             },
             '<'
         );
+    }
 
     const addListener = (element, eventName, handler) => {
         element.addEventListener(eventName, handler);

@@ -9,6 +9,8 @@ const DEFAULT_SCRUB_CONFIG = {
     preloadRootMargin: '200% 0px',
 };
 
+const LEGACY_ASSET_BASE_URL = 'https://perception-pod.netlify.app';
+
 function parseNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -18,6 +20,24 @@ export function normalizeBaseUrl(baseUrl = '') {
     return String(baseUrl).trim().replace(/\/+$/, '');
 }
 
+export function inferAssetBaseUrl() {
+    if (typeof window === 'undefined') {
+        return LEGACY_ASSET_BASE_URL;
+    }
+
+    const configuredBundleUrl = window.PerceptionPodConfig?.bundleUrl;
+
+    if (configuredBundleUrl) {
+        try {
+            return normalizeBaseUrl(new URL('.', configuredBundleUrl).href);
+        } catch {
+            // Fall through to the legacy asset host.
+        }
+    }
+
+    return LEGACY_ASSET_BASE_URL;
+}
+
 export function resolveScrubConfig(overrides = {}) {
     const config = {
         ...DEFAULT_SCRUB_CONFIG,
@@ -25,7 +45,7 @@ export function resolveScrubConfig(overrides = {}) {
     };
 
     return {
-        assetBaseUrl: normalizeBaseUrl(config.assetBaseUrl),
+        assetBaseUrl: normalizeBaseUrl(config.assetBaseUrl) || inferAssetBaseUrl(),
         extension: String(config.extension || DEFAULT_SCRUB_CONFIG.extension).replace(/^\./, ''),
         firstFrame: parseNumber(config.firstFrame, DEFAULT_SCRUB_CONFIG.firstFrame),
         frameCount: parseNumber(config.frameCount, DEFAULT_SCRUB_CONFIG.frameCount),
@@ -47,4 +67,4 @@ export function buildFrameUrls(config) {
     );
 }
 
-export { DEFAULT_SCRUB_CONFIG };
+export { DEFAULT_SCRUB_CONFIG, LEGACY_ASSET_BASE_URL };

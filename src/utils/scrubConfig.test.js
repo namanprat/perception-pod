@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildFrameUrl,
     buildFrameUrls,
+    inferAssetBaseUrl,
     normalizeBaseUrl,
     resolveScrubConfig,
 } from './scrubConfig';
@@ -45,8 +46,29 @@ describe('scrubConfig', () => {
     });
 
     it('falls back to root-relative frame urls when no base url is configured', () => {
-        const config = resolveScrubConfig({ firstFrame: 0, frameCount: 2 });
+        const config = resolveScrubConfig({
+            assetBaseUrl: 'https://perception-pod.netlify.app',
+            firstFrame: 0,
+            frameCount: 2,
+        });
 
-        expect(buildFrameUrls(config)).toEqual(['/0.png', '/1.png']);
+        expect(buildFrameUrls(config)).toEqual([
+            'https://perception-pod.netlify.app/0.png',
+            'https://perception-pod.netlify.app/1.png',
+        ]);
+    });
+
+    it('infers the asset base url from the bundle url when available', () => {
+        const previousWindow = globalThis.window;
+
+        globalThis.window = {
+            PerceptionPodConfig: {
+                bundleUrl: 'https://cdn.example.com/assets/main.js',
+            },
+        };
+
+        expect(inferAssetBaseUrl()).toBe('https://cdn.example.com/assets');
+
+        globalThis.window = previousWindow;
     });
 });

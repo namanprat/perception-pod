@@ -7,6 +7,14 @@ import Gradient from './gradient';
 import { gsap, ScrollTrigger } from './runtime/gsapRuntime';
 import { createCleanupRegistry, hasAnySelector, onDomReady } from './utils/dom';
 
+if (typeof window !== 'undefined') {
+  window.PerceptionPodConfig ??= {};
+
+  if (!window.PerceptionPodConfig.bundleUrl && document.currentScript?.src) {
+    window.PerceptionPodConfig.bundleUrl = document.currentScript.src;
+  }
+}
+
 function initSmoothScroll() {
   const lenis = new Lenis();
   const updateScrollTrigger = () => ScrollTrigger.update();

@@ -76,12 +76,24 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
             },
         });
 
-    let canvas = document.getElementById('pp-scrub');
+    const existingCanvasNode = document.getElementById('pp-scrub');
+    let canvas =
+        existingCanvasNode instanceof HTMLCanvasElement
+            ? existingCanvasNode
+            : existingCanvasNode?.querySelector('canvas');
 
     if (!canvas) {
         canvas = document.createElement('canvas');
-        canvas.id = 'pp-scrub';
-        scrubContain.appendChild(canvas);
+        canvas.id = existingCanvasNode ? 'pp-scrub-canvas' : 'pp-scrub';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
+
+        if (existingCanvasNode) {
+            existingCanvasNode.appendChild(canvas);
+        } else {
+            scrubContain.appendChild(canvas);
+        }
     }
 
     let context = null;
@@ -94,7 +106,7 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     }
 
     const resizeCanvas = () => {
-        const rect = scrubContain.getBoundingClientRect();
+        const rect = (existingCanvasNode ?? scrubContain).getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
         canvas.width = Math.max(1, Math.floor(rect.width * dpr));
@@ -192,16 +204,13 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     };
 
     const loadFrameRange = async (indexes, progressCallback) => {
-        let loadedCount = 0;
+        let completedCount = 0;
 
         await Promise.all(
             indexes.map(async (index) => {
-                const image = await loadFrame(index);
-
-                if (image) {
-                    loadedCount += 1;
-                    progressCallback?.(loadedCount);
-                }
+                await loadFrame(index);
+                completedCount += 1;
+                progressCallback?.(completedCount);
             })
         );
     };
@@ -335,7 +344,7 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     const loadStartTime = performance.now();
     const eagerIndexes = Array.from({ length: eagerLimit }, (_, index) => index);
 
-    loadFrameRange(eagerIndexes, (loadedCount) => updateProgress(loadedCount, eagerLimit)).then(() => {
+    loadFrameRange(eagerIndexes, (completedCount) => updateProgress(completedCount, eagerLimit)).then(() => {
         updateProgress(eagerLimit, eagerLimit);
         initScrollTrigger();
         runPreloaderExit(loadStartTime);
