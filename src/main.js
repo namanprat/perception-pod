@@ -3,7 +3,6 @@ import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
 import initPageRuntime from './misc.js';
 import menu from './menuReveal'
-import Gradient from './gradient';
 import { gsap, ScrollTrigger } from './runtime/gsapRuntime';
 import { createCleanupRegistry, hasAnySelector, onDomReady } from './utils/dom';
 
@@ -37,8 +36,10 @@ onDomReady(() => {
   const cleanupRegistry = createCleanupRegistry();
 
   if (document.getElementById('gradient')) {
-    const gradient = new Gradient();
-    cleanupRegistry.add(() => gradient.destroy());
+    import('./gradient').then(({ default: Gradient }) => {
+      const gradient = new Gradient();
+      cleanupRegistry.add(() => gradient.destroy());
+    });
   }
 
   if (hasAnySelector(['.hero_contain', '.scrub_wrap', '.reveal_wrap'])) {
