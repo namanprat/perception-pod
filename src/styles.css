@@ -54,19 +54,23 @@ canvas {
 }
 
 .tooltip_wrap,
+.tooltip-info,
+.tooltip_contain,
+.tooltip-circle,
+#tooltip-header,
+#tooltip-body,
+#header-reveal,
+#body-reveal {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.tooltip_wrap,
 .tooltip-info {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  opacity: 0;
-  visibility: hidden;
-}
-
-#tooltip-header,
-#tooltip-body {
-  opacity: 0;
-  visibility: hidden;
 }
 
 .scrub_contain {

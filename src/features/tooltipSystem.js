@@ -269,7 +269,8 @@ export function initTooltipSystem() {
 
     const tooltipTrigger = ScrollTrigger.create({
         trigger: scrubWrap,
-        start: 'top 80%',
+        // past hero overlap (-100vh canvas bleed); keep UI out of initial 100vh
+        start: 'top top',
         end: 'bottom top',
         scrub: true,
         onEnter: () => {

@@ -26,7 +26,7 @@ describe('scrubConfig', () => {
             assetBaseUrl: 'https://cdn.example.com',
             eagerCount: 12,
             frameCount: 24,
-            extension: 'png',
+            extension: 'webp',
         });
     });
 
@@ -37,11 +37,11 @@ describe('scrubConfig', () => {
             frameCount: 3,
         });
 
-        expect(buildFrameUrl(5, config)).toBe('https://cdn.example.com/perception/5.png');
+        expect(buildFrameUrl(5, config)).toBe('https://cdn.example.com/perception/5.webp');
         expect(buildFrameUrls(config)).toEqual([
-            'https://cdn.example.com/perception/5.png',
-            'https://cdn.example.com/perception/6.png',
-            'https://cdn.example.com/perception/7.png',
+            'https://cdn.example.com/perception/5.webp',
+            'https://cdn.example.com/perception/6.webp',
+            'https://cdn.example.com/perception/7.webp',
         ]);
     });
 
@@ -53,8 +53,8 @@ describe('scrubConfig', () => {
         });
 
         expect(buildFrameUrls(config)).toEqual([
-            'https://perception-pod.netlify.app/0.png',
-            'https://perception-pod.netlify.app/1.png',
+            'https://perception-pod.netlify.app/0.webp',
+            'https://perception-pod.netlify.app/1.webp',
         ]);
     });
 

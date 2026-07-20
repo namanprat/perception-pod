@@ -59,7 +59,6 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     const frameLoadPromises = new Map();
     const preloaderTimeline = gsap.timeline();
     let scrollTween = null;
-    let cancelled = false;
 
     preloaderTimeline
         .to('.preloader-wordmark', { opacity: 1, yPercent: 0, duration: 0.2 })
@@ -212,31 +211,6 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
         );
     };
 
-    // ponytail: sequential batches; IntersectionObserver if preload still lags
-    const loadRemainingInBatches = async (indexes) => {
-        const size = Math.max(1, config.batchSize);
-
-        for (let offset = 0; offset < indexes.length; offset += size) {
-            if (cancelled) {
-                return;
-            }
-
-            await loadFrameRange(indexes.slice(offset, offset + size));
-        }
-    };
-
-    const ensureFrameLoaded = (frameIndex) => {
-        if (imageSequence.loaded.has(frameIndex)) {
-            return;
-        }
-
-        loadFrame(frameIndex).then(() => {
-            if (!cancelled && Math.floor(imageSequence.frame) === frameIndex) {
-                drawFrame();
-            }
-        });
-    };
-
     const initScrollTrigger = () => {
         drawFrame();
 
@@ -253,15 +227,7 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
                 start: 'top top',
                 end: 'bottom bottom',
                 scrub: 0.5,
-                onUpdate: () => {
-                    ensureFrameLoaded(
-                        Math.max(
-                            0,
-                            Math.min(Math.floor(imageSequence.frame), imageSequence.totalImages - 1)
-                        )
-                    );
-                    drawFrame();
-                },
+                onUpdate: () => drawFrame(),
             },
         });
 
@@ -326,35 +292,21 @@ export function initScrubSequence({ onPreloaderComplete } = {}) {
     cleanupCallbacks.push(() => window.removeEventListener('resize', handleResize));
 
     resizeCanvas();
+    updateProgress(0, imageSequence.totalImages);
 
     const loadStartTime = performance.now();
-    const eagerCount = Math.min(
-        Math.max(1, config.eagerCount),
-        imageSequence.totalImages
-    );
-    const eagerIndexes = Array.from({ length: eagerCount }, (_, index) => index);
-    const remainingIndexes = Array.from(
-        { length: imageSequence.totalImages - eagerCount },
-        (_, index) => index + eagerCount
-    );
+    const frameIndexes = Array.from({ length: imageSequence.totalImages }, (_, index) => index);
 
-    updateProgress(0, eagerCount);
-
-    loadFrameRange(eagerIndexes, (completedCount) =>
-        updateProgress(completedCount, eagerCount)
+    loadFrameRange(
+        frameIndexes,
+        (completedCount) => updateProgress(completedCount, imageSequence.totalImages)
     ).then(() => {
-        if (cancelled) {
-            return;
-        }
-
-        updateProgress(eagerCount, eagerCount);
+        updateProgress(imageSequence.totalImages, imageSequence.totalImages);
         initScrollTrigger();
         runPreloaderExit(loadStartTime);
-        loadRemainingInBatches(remainingIndexes);
     });
 
     cleanupCallbacks.push(() => {
-        cancelled = true;
         scrollTween?.kill();
     });
 

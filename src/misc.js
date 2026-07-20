@@ -167,9 +167,12 @@ function initScrollRevealText() {
         const revealTimeline = gsap.timeline({
             scrollTrigger: {
                 trigger: '#header-reveal',
-                start: 'top 75%',
+                // past hero; scrub text must not appear in initial 100vh
+                start: 'top 40%',
             },
         });
+
+        revealTimeline.set(['#header-reveal', '#body-reveal'], { autoAlpha: 1 });
 
         revealTimeline.from(headerText?.words ?? [], {
                 yPercent: 105,
